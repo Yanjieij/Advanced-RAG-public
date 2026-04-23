@@ -1,0 +1,469 @@
+{
+  "description": "MultiHop-RAG subset: 30 questions requiring multi-document reasoning over 30+ technology news articles",
+  "version": "1.0",
+  "source": "yixuantt/MultiHopRAG (COLM 2024)",
+  "questions": [
+    {
+      "id": 1,
+      "question": "Does the TechCrunch article suggest that Flipboard's implementation of the ActivityPub protocol is aimed at changing its platform structure, while The Verge article focuses on the structural elements of posts within the ActivityPub protocol itself?",
+      "ground_truth": "Yes",
+      "ground_truth_contexts": [
+        "“What we’re announcing on Monday is basically our roadmap for how we will be rolling out ActivityPub, and effectively tearing down the walls around our own walled garden,” he added.",
+        "In the world of ActivityPub, every post everywhere is made up of a sender, a message, and a URL."
+      ],
+      "source_doc": [
+        "Flipboard becomes a federated app with support for ActivityPub",
+        "2023 in social media: the case for the fediverse"
+      ],
+      "difficulty": "comparison_query"
+    },
+    {
+      "id": 2,
+      "question": "Does the TechCrunch article suggest that Sam Bankman-Fried's use of wealth was primarily for personal gain, while The Verge article focuses on the ethicality of his financial practices, and does the second TechCrunch article imply that his actions were driven by fraudulent intentions?",
+      "ground_truth": "no",
+      "ground_truth_contexts": [
+        "He was the richest person in the world under 30 [and] he was going to spend it to save humanity from extinction,” he said.",
+        "Wang testified that he heard Bankman-Fried tell another trader that it was okay to continue withdrawing money from the account as long as the amount was less than FTX’s total trading revenue.",
+        "The prosecution painted Bankman-Fried as someone who knowingly committed fraud to achieve great wealth, power and influence, while the defense countered that the FTX founder acted in good faith, never meant to commit fraud or steal and basically got in over his head."
+      ],
+      "source_doc": [
+        "SBF, riding high on FTX, reportedly offered $5B to Trump to cancel President re-run",
+        "In the end, the FTX trial was about the friends screwed along the way",
+        "Sam Altman backs teens’ startup, Google unveils the Pixel 8 and TikTok tests an ad-free tier"
+      ],
+      "difficulty": "comparison_query"
+    },
+    {
+      "id": 3,
+      "question": "Does the TechCrunch article claim that Google's anticompetitive behavior affects the app distribution and payment processing markets for Android, while The Verge article focuses on the market definition in an antitrust case involving Google, and another TechCrunch article alleges Google's anticompetitive actions impact news publishers' content, readers, and ad revenue?",
+      "ground_truth": "Yes",
+      "ground_truth_contexts": [
+        "This whole line of argument is called “market definition.” If the court decides the relevant market is phones and app stores, not specifically Android ones, then Google’s on the road to victory.",
+        "It will attempt to argue that Google restrains competition within two separate markets, including the distribution of apps to Android users and the market for payment processing solutions for content inside Android apps.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "Epic v. Google, explained",
+        "What to know about Fortnite maker Epic Games’ antitrust battle with Google, starting today",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "comparison_query"
+    },
+    {
+      "id": 4,
+      "question": "Do the articles from The Verge and TechCrunch both suggest that interactive activities, such as dressing up for parents of children interested in Pokémon and conversing with Alexa, are methods to engage with children, or do they propose different engagement strategies?",
+      "ground_truth": "Yes",
+      "ground_truth_contexts": [
+        "If your little ones are engrossed in the Pokémon world, then a fun way to engage with their hobby is with a little dress-up.",
+        "That is, it’s not just kids asking Alexa a question and receiving a response."
+      ],
+      "source_doc": [
+        "The Verge’s 2023 holiday gift guide for kids",
+        "Amazon brings conversational AI to kids with launch of ‘Explore with Alexa’"
+      ],
+      "difficulty": "comparison_query"
+    },
+    {
+      "id": 5,
+      "question": "Does the TechCrunch article on Epic Games' antitrust battle with Google suggest a different level of transparency in legal discovery compared to the TechCrunch article on the class action antitrust suit filed by a news publisher against Google, with the former discussing Google's disclosure of evidence and the latter addressing Google's alleged anticompetitive behavior?",
+      "ground_truth": "No",
+      "ground_truth_contexts": [
+        "Epic will also suggest that Google hid items from discovery by allowing execs and employees to have “off the record” chats, but Google will counter this as well, saying it has provided the court with thousands of chat logs and millions of documents.",
+        "In blog posts and press materials, Google touted Gemini’s superior architecture and capabilities, claiming that the model meets or exceeds the performance of other leading gen AI models like OpenAI’s GPT-4.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "What to know about Fortnite maker Epic Games’ antitrust battle with Google, starting today",
+        "Early impressions of Google’s Gemini aren’t great",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "comparison_query"
+    },
+    {
+      "id": 6,
+      "question": "Does the TechCrunch article allege that Meta violated a specific law concerning children's online privacy, while The Verge article discusses Ofcom's guidelines for tech firms to comply with a different set of regulations for online safety?",
+      "ground_truth": "Yes",
+      "ground_truth_contexts": [
+        "In one respect at least, however, the documentation obtained by the attorneys general of 42 states is quite specific, “and it is damning,” as AG Rob Bonta of California put it.",
+        "After the Online Safety Act’s arduous multiyear passage through the UK’s lawmaking process, regulator Ofcom has published its first guidelines for how tech firms can comply with the mammoth legislation."
+      ],
+      "source_doc": [
+        "Meta turned a blind eye to kids on its platforms for years, unredacted lawsuit alleges",
+        "The UK just laid out new rules for the internet — it only gets harder from here"
+      ],
+      "difficulty": "comparison_query"
+    },
+    {
+      "id": 7,
+      "question": "Does the TechCrunch article suggest that Amazon's large language model (LLM) is not trained on kids' responses, while The Verge article implies that Apple trusts Google with user data?",
+      "ground_truth": "Yes",
+      "ground_truth_contexts": [
+        "In terms of privacy, the company notes it’s not training its LLM on kids’ answers.",
+        "Cue had two messages: Apple believes in protecting its users’ privacy, and it also believes in Google."
+      ],
+      "source_doc": [
+        "Amazon brings conversational AI to kids with launch of ‘Explore with Alexa’",
+        "Apple defends Google Search deal in court: ‘There wasn’t a valid alternative’"
+      ],
+      "difficulty": "comparison_query"
+    },
+    {
+      "id": 8,
+      "question": "Does the TechCrunch article discussing the US v Google trial mention the same amount of money spent by Google in 2021 to secure its default search engine status as the TechCrunch article covering the Google antitrust case, with both citing $26.3 billion?",
+      "ground_truth": "Yes",
+      "ground_truth_contexts": [
+        "In our last roundup, we learned how Google spent $26.3 billion in 2021 making itself the default search engine across platforms and how Google tried to have Chrome preinstalled on iPhones.",
+        "When Google’s search head Prabhakar Raghavan testified in court on October 28, he revealed that the tech giant had paid $26.3 billion in 2021 to multiple browsers, phones and platforms, from companies including Apple, Samsung and Mozilla, The Verge reports.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "More from the US v Google trial: vertical search, pre-installs and the case of Firefox/Yahoo",
+        "5 things we learned so far about the Google antitrust case",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "comparison_query"
+    },
+    {
+      "id": 9,
+      "question": "Does the TechCrunch article suggest that Google's actions towards news publishers are anticompetitive, while The Age article implies that users are accepting of potential misconduct by Google, and another TechCrunch article reports on Google's hardware event, indicating different contexts of Google's activities in each source?",
+      "ground_truth": "Yes",
+      "ground_truth_contexts": [
+        "Google unveils new hardware: This week was Google’s annual hardware event, where the search and consumer tech giant showed off what it’s been working on.",
+        "Wired removed the article for not meeting its standards, but the degree to which it was shared on social media and boosted in write-ups at other outlets shows just how willing people are to accept foul play on Google’s part.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "Sam Altman backs teens’ startup, Google unveils the Pixel 8 and TikTok tests an ad-free tier",
+        "Is Google Search better than the rest? And is that fair?",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "comparison_query"
+    },
+    {
+      "id": 10,
+      "question": "Does the TechCrunch article suggest that users are turning to Snapchat for entertainment purposes due to trust in other platforms, while The Guardian article claims that Snapchat's platform has facilitated a different type of activity unrelated to information sharing?",
+      "ground_truth": "no",
+      "ground_truth_contexts": [
+        "Users are also turning to Snapchat for information about Gaza as accusations of shadowbanning Palestinian content fuel distrust in platforms like Instagram and Facebook.",
+        "And by using Snapchat, he was able to avoid an in-person meetup and have the pills delivered straight to his door."
+      ],
+      "source_doc": [
+        "People are turning to Snap Map for firsthand perspectives from Gaza",
+        "Their kids died after buying drugs on Snapchat. Now the parents are suing"
+      ],
+      "difficulty": "comparison_query"
+    },
+    {
+      "id": 11,
+      "question": "Which company, featured in multiple TechCrunch articles, has both invested in new hardware developments during an annual event and has been involved in antitrust actions for securing default search engine positions and affecting news publishers' revenues through its practices?",
+      "ground_truth": "Google",
+      "ground_truth_contexts": [
+        "Google unveils new hardware: This week was Google’s annual hardware event, where the search and consumer tech giant showed off what it’s been working on.",
+        "When Google’s search head Prabhakar Raghavan testified in court on October 28, he revealed that the tech giant had paid $26.3 billion in 2021 to multiple browsers, phones and platforms, from companies including Apple, Samsung and Mozilla, The Verge reports.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "Sam Altman backs teens’ startup, Google unveils the Pixel 8 and TikTok tests an ad-free tier",
+        "5 things we learned so far about the Google antitrust case",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "inference_query"
+    },
+    {
+      "id": 12,
+      "question": "Which company, reported by TechCrunch, has both invested $26.3 billion to maintain its default search engine status across devices and platforms in 2021, and has been accused in a class action lawsuit of harming news publishers' revenues and readership through anticompetitive practices?",
+      "ground_truth": "Google",
+      "ground_truth_contexts": [
+        "When Google’s search head Prabhakar Raghavan testified in court on October 28, he revealed that the tech giant had paid $26.3 billion in 2021 to multiple browsers, phones and platforms, from companies including Apple, Samsung and Mozilla, The Verge reports.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "5 things we learned so far about the Google antitrust case",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "inference_query"
+    },
+    {
+      "id": 13,
+      "question": "Which company, highlighted in articles by both TechCrunch and The Verge, has been portrayed as using its financial power to maintain default search engine status and accused of anticompetitive practices affecting news publishers and portrayed as an antagonist by Epic Games?",
+      "ground_truth": "Google",
+      "ground_truth_contexts": [
+        "When Google’s search head Prabhakar Raghavan testified in court on October 28, he revealed that the tech giant had paid $26.3 billion in 2021 to multiple browsers, phones and platforms, from companies including Apple, Samsung and Mozilla, The Verge reports.",
+        "But while this will probably come up later in the trial, Epic chose to focus more on simply painting Google as the bad guy on day one.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "5 things we learned so far about the Google antitrust case",
+        "The Epic v. Google trial may come down to simple v. complicated",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "inference_query"
+    },
+    {
+      "id": 14,
+      "question": "Which company, cited in articles from both The Verge and TechCrunch, is involved in legal disputes for making exclusive deals with major tech companies, defending against accusations in an antitrust battle with a game maker, and facing a class action lawsuit for its impact on news publishers' revenues?",
+      "ground_truth": "Google",
+      "ground_truth_contexts": [
+        "The Justice Department is focused on the deals Google makes — with Apple but also with Samsung and Mozilla and many others — to ensure it is the default search engine on practically every platform.",
+        "Epic will also suggest that Google hid items from discovery by allowing execs and employees to have “off the record” chats, but Google will counter this as well, saying it has provided the court with thousands of chat logs and millions of documents.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "Apple defends Google Search deal in court: ‘There wasn’t a valid alternative’",
+        "What to know about Fortnite maker Epic Games’ antitrust battle with Google, starting today",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "inference_query"
+    },
+    {
+      "id": 15,
+      "question": "Which company, featured in TechCrunch articles, has been compared to OpenAI in terms of AI performance, has recently showcased new hardware at an annual event, and is also accused of harming news publishers' bottom lines through anticompetitive practices?",
+      "ground_truth": "Google",
+      "ground_truth_contexts": [
+        "Google compared the performance of Gemini Pro to GPT-4’s predecessor, GPT-3.5, a model that’s around a year old.",
+        "Google unveils new hardware: This week was Google’s annual hardware event, where the search and consumer tech giant showed off what it’s been working on.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "Early impressions of Google’s Gemini aren’t great",
+        "Sam Altman backs teens’ startup, Google unveils the Pixel 8 and TikTok tests an ad-free tier",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "inference_query"
+    },
+    {
+      "id": 16,
+      "question": "Who is the individual facing a criminal trial on seven counts of fraud and conspiracy, previously likened to a financial icon but not by TechCrunch, and is accused by the prosecution of committing fraud for wealth, power, and influence?",
+      "ground_truth": "Sam Bankman-Fried",
+      "ground_truth_contexts": [
+        "Bankman-Fried was even compared to Warren Buffet and many called him the white horse of crypto (TechCrunch never did, for what it’s worth).",
+        "The highly anticipated criminal trial for Sam Bankman-Fried, former CEO of bankrupt crypto exchange FTX, started Tuesday to determine whether he’s guilty of seven counts of fraud and conspiracy.",
+        "The prosecution painted Bankman-Fried as someone who knowingly committed fraud to achieve great wealth, power and influence, while the defense countered that the FTX founder acted in good faith, never meant to commit fraud or steal and basically got in over his head."
+      ],
+      "source_doc": [
+        "SBF’s trial starts soon, but how did he — and FTX — get here?",
+        "SBF’s trial starts soon, but how did he — and FTX — get here?",
+        "Sam Altman backs teens’ startup, Google unveils the Pixel 8 and TikTok tests an ad-free tier"
+      ],
+      "difficulty": "inference_query"
+    },
+    {
+      "id": 17,
+      "question": "Which company is at the center of antitrust legal challenges, as reported by TechCrunch and The Verge, where it is accused of both withholding information from court discovery and being portrayed as an antagonist by a game maker, as well as harming news publishers' revenue through anticompetitive practices?",
+      "ground_truth": "Google",
+      "ground_truth_contexts": [
+        "Epic will also suggest that Google hid items from discovery by allowing execs and employees to have “off the record” chats, but Google will counter this as well, saying it has provided the court with thousands of chat logs and millions of documents.",
+        "But while this will probably come up later in the trial, Epic chose to focus more on simply painting Google as the bad guy on day one.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "What to know about Fortnite maker Epic Games’ antitrust battle with Google, starting today",
+        "The Epic v. Google trial may come down to simple v. complicated",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "inference_query"
+    },
+    {
+      "id": 18,
+      "question": "Which company is at the center of legal scrutiny for potentially anticompetitive behavior, as discussed in articles from The Verge regarding a court case, The Age in the context of search fairness, and TechCrunch regarding a class action lawsuit filed by news publishers?",
+      "ground_truth": "Google",
+      "ground_truth_contexts": [
+        "This whole line of argument is called “market definition.” If the court decides the relevant market is phones and app stores, not specifically Android ones, then Google’s on the road to victory.",
+        "Wired removed the article for not meeting its standards, but the degree to which it was shared on social media and boosted in write-ups at other outlets shows just how willing people are to accept foul play on Google’s part.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "Epic v. Google, explained",
+        "Is Google Search better than the rest? And is that fair?",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "inference_query"
+    },
+    {
+      "id": 19,
+      "question": "What company is associated with the AI model Gemini, which claims to rival the performance of GPT-4, and is also the subject of a class action antitrust suit reported by TechCrunch for harming news publishers' revenues and content through alleged anticompetitive practices?",
+      "ground_truth": "Google",
+      "ground_truth_contexts": [
+        "In blog posts and press materials, Google touted Gemini’s superior architecture and capabilities, claiming that the model meets or exceeds the performance of other leading gen AI models like OpenAI’s GPT-4.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "Early impressions of Google’s Gemini aren’t great",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "inference_query"
+    },
+    {
+      "id": 20,
+      "question": "Who is the individual facing a criminal trial on charges of fraud and conspiracy, as reported by TechCrunch, and is also alleged by the prosecution to have committed these acts to gain wealth, power, and influence?",
+      "ground_truth": "Sam Bankman-Fried",
+      "ground_truth_contexts": [
+        "The highly anticipated criminal trial for Sam Bankman-Fried, former CEO of bankrupt crypto exchange FTX, started Tuesday to determine whether he’s guilty of seven counts of fraud and conspiracy.",
+        "The prosecution painted Bankman-Fried as someone who knowingly committed fraud to achieve great wealth, power and influence, while the defense countered that the FTX founder acted in good faith, never meant to commit fraud or steal and basically got in over his head."
+      ],
+      "source_doc": [
+        "SBF’s trial starts soon, but how did he — and FTX — get here?",
+        "Sam Altman backs teens’ startup, Google unveils the Pixel 8 and TikTok tests an ad-free tier"
+      ],
+      "difficulty": "inference_query"
+    },
+    {
+      "id": 21,
+      "question": "Between the report from The Verge on November 5, 2023, regarding the Epic v. Google case and the report from TechCrunch on December 15, 2023, about the class action antitrust suit filed against Google by a news publisher, is there consistency in the portrayal of Google's market practices as described by these news sources?",
+      "ground_truth": "Yes",
+      "ground_truth_contexts": [
+        "This whole line of argument is called “market definition.” If the court decides the relevant market is phones and app stores, not specifically Android ones, then Google’s on the road to victory.",
+        "In blog posts and press materials, Google touted Gemini’s superior architecture and capabilities, claiming that the model meets or exceeds the performance of other leading gen AI models like OpenAI’s GPT-4.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "Epic v. Google, explained",
+        "Early impressions of Google’s Gemini aren’t great",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "temporal_query"
+    },
+    {
+      "id": 22,
+      "question": "Between the report by The Age on October 22, 2023, claiming that Google manipulates Search to maximize ad revenue, and the TechCrunch report on December 15, 2023, alleging that Google \"siphons off\" news publishers' content, readers, and ad revenue through anticompetitive means, was there consistency in the portrayal of Google's business practices by these news sources?",
+      "ground_truth": "Yes",
+      "ground_truth_contexts": [
+        "In blog posts and press materials, Google touted Gemini’s superior architecture and capabilities, claiming that the model meets or exceeds the performance of other leading gen AI models like OpenAI’s GPT-4.",
+        "She admits that she may have misinterpreted the evidence, but maintains that Google manipulates Search to maximise ad revenue.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "Early impressions of Google’s Gemini aren’t great",
+        "Is Google Search better than the rest? And is that fair?",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "temporal_query"
+    },
+    {
+      "id": 23,
+      "question": "Between the report from The Age on October 22, 2022, regarding Google's manipulation of search results to maximize ad revenue, and the TechCrunch report on December 15, 2023, about a class action antitrust suit filed against Google citing AI's harms to news publishers' bottom lines, is the portrayal of Google's business practices inconsistent?",
+      "ground_truth": "no",
+      "ground_truth_contexts": [
+        "Epic will also suggest that Google hid items from discovery by allowing execs and employees to have “off the record” chats, but Google will counter this as well, saying it has provided the court with thousands of chat logs and millions of documents.",
+        "She admits that she may have misinterpreted the evidence, but maintains that Google manipulates Search to maximise ad revenue.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "What to know about Fortnite maker Epic Games’ antitrust battle with Google, starting today",
+        "Is Google Search better than the rest? And is that fair?",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "temporal_query"
+    },
+    {
+      "id": 24,
+      "question": "Was there inconsistency in the portrayal of Sam Bankman-Fried's involvement in the FTX collapse between the TechCrunch report published on October 6, 2023, and the TechCrunch report published on October 7, 2023?",
+      "ground_truth": "no",
+      "ground_truth_contexts": [
+        "It was not until Judge Lewis Kaplan intervened to ask if Bankman-Fried had ever been told by Yedidia about that money, in words or in substance, that Bankman-Fried admitted he’d been told.",
+        "The second week of the trial’s standout testimony came from Alameda Research’s former CEO Caroline Ellison, who claimed she took $14 billion from customers to repay debts to lenders, using them as a line of credit under the instruction of SBF.",
+        "The prosecution painted Bankman-Fried as someone who knowingly committed fraud to achieve great wealth, power and influence, while the defense countered that the FTX founder acted in good faith, never meant to commit fraud or steal and basically got in over his head."
+      ],
+      "source_doc": [
+        "Sam Bankman-Fried didn’t ask where the $8 billion went",
+        "SBF Trial: The latest updates from the FTX collapse’s courtroom drama",
+        "Sam Altman backs teens’ startup, Google unveils the Pixel 8 and TikTok tests an ad-free tier"
+      ],
+      "difficulty": "temporal_query"
+    },
+    {
+      "id": 25,
+      "question": "Between the report from The Verge on the Epic v. Google case and the subsequent report from TechCrunch on the same case, was there disagreement on the nature of Epic Games' arguments against Google?",
+      "ground_truth": "no",
+      "ground_truth_contexts": [
+        "This whole line of argument is called “market definition.” If the court decides the relevant market is phones and app stores, not specifically Android ones, then Google’s on the road to victory.",
+        "It will attempt to argue that Google restrains competition within two separate markets, including the distribution of apps to Android users and the market for payment processing solutions for content inside Android apps.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "Epic v. Google, explained",
+        "What to know about Fortnite maker Epic Games’ antitrust battle with Google, starting today",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "temporal_query"
+    },
+    {
+      "id": 26,
+      "question": "Between the TechCrunch report on Sam Bankman-Fried's trial published on October 1, 2023, and the TechCrunch report on the allegations against Sam Bankman-Fried published on October 7, 2023, was the portrayal of Sam Bankman-Fried's legal situation consistent?",
+      "ground_truth": "Yes",
+      "ground_truth_contexts": [
+        "Bankman-Fried was even compared to Warren Buffet and many called him the white horse of crypto (TechCrunch never did, for what it’s worth).",
+        "The highly anticipated criminal trial for Sam Bankman-Fried, former CEO of bankrupt crypto exchange FTX, started Tuesday to determine whether he’s guilty of seven counts of fraud and conspiracy.",
+        "The prosecution painted Bankman-Fried as someone who knowingly committed fraud to achieve great wealth, power and influence, while the defense countered that the FTX founder acted in good faith, never meant to commit fraud or steal and basically got in over his head."
+      ],
+      "source_doc": [
+        "SBF’s trial starts soon, but how did he — and FTX — get here?",
+        "SBF’s trial starts soon, but how did he — and FTX — get here?",
+        "Sam Altman backs teens’ startup, Google unveils the Pixel 8 and TikTok tests an ad-free tier"
+      ],
+      "difficulty": "temporal_query"
+    },
+    {
+      "id": 27,
+      "question": "Before the report by The Age on October 22, 2023, which maintained that Google manipulates Search to maximise ad revenue, and the subsequent report by TechCrunch on November 13, 2023, detailing Google's expenditure to be the default search engine, was there inconsistency in the portrayal of Google's business practices in the TechCrunch article published on December 15, 2023, regarding the class action antitrust suit against Google?",
+      "ground_truth": "no",
+      "ground_truth_contexts": [
+        "In our last roundup, we learned how Google spent $26.3 billion in 2021 making itself the default search engine across platforms and how Google tried to have Chrome preinstalled on iPhones.",
+        "She admits that she may have misinterpreted the evidence, but maintains that Google manipulates Search to maximise ad revenue.",
+        "The case, filed by Arkansas-based publisher Helena World Chronicle, argues that Google “siphons off” news publishers’ content, their readers and ad revenue through anticompetitive means."
+      ],
+      "source_doc": [
+        "More from the US v Google trial: vertical search, pre-installs and the case of Firefox/Yahoo",
+        "Is Google Search better than the rest? And is that fair?",
+        "News publisher files class action antitrust suit against Google, citing AI’s harms to their bottom line"
+      ],
+      "difficulty": "temporal_query"
+    },
+    {
+      "id": 28,
+      "question": "Between the TechCrunch report on Sam Bankman-Fried's trial published on October 6, 2023, and The Verge's coverage of the same topic, was there consistency in the portrayal of Sam Bankman-Fried's actions related to the FTX collapse?",
+      "ground_truth": "Yes",
+      "ground_truth_contexts": [
+        "The second week of the trial’s standout testimony came from Alameda Research’s former CEO Caroline Ellison, who claimed she took $14 billion from customers to repay debts to lenders, using them as a line of credit under the instruction of SBF.",
+        "Wang testified that he heard Bankman-Fried tell another trader that it was okay to continue withdrawing money from the account as long as the amount was less than FTX’s total trading revenue.",
+        "The prosecution painted Bankman-Fried as someone who knowingly committed fraud to achieve great wealth, power and influence, while the defense countered that the FTX founder acted in good faith, never meant to commit fraud or steal and basically got in over his head."
+      ],
+      "source_doc": [
+        "SBF Trial: The latest updates from the FTX collapse’s courtroom drama",
+        "In the end, the FTX trial was about the friends screwed along the way",
+        "Sam Altman backs teens’ startup, Google unveils the Pixel 8 and TikTok tests an ad-free tier"
+      ],
+      "difficulty": "temporal_query"
+    },
+    {
+      "id": 29,
+      "question": "Considering the excerpts from TechCrunch, has the focus of European AI startups on regulation and compliance changed since the report on November 9, 2023, before the EU lawmakers reached a deal on AI rules on December 9, 2023?",
+      "ground_truth": "no",
+      "ground_truth_contexts": [
+        "One thing that might differentiate European AI startups from AI giants like OpenAI and Anthropic is that they’re thinking about regulation and compliance from day one.",
+        "“Similarly, the agreement provides that the regulation would not apply to AI systems used for the sole purpose of research and innovation, or for people using AI for non-professional reasons,” the Council added."
+      ],
+      "source_doc": [
+        "There’s something going on with AI startups in France",
+        "EU lawmakers bag late night deal on ‘global first’ AI rules"
+      ],
+      "difficulty": "temporal_query"
+    },
+    {
+      "id": 30,
+      "question": "Between the TechCrunch report on Sam Bankman-Fried's trial published on October 1, 2023, and the TechCrunch report on the allegations against Sam Bankman-Fried published on October 7, 2023, was there consistency in the portrayal of Sam Bankman-Fried's involvement in the FTX collapse?",
+      "ground_truth": "Yes",
+      "ground_truth_contexts": [
+        "The second week of the trial’s standout testimony came from Alameda Research’s former CEO Caroline Ellison, who claimed she took $14 billion from customers to repay debts to lenders, using them as a line of credit under the instruction of SBF.",
+        "The highly anticipated criminal trial for Sam Bankman-Fried, former CEO of bankrupt crypto exchange FTX, started Tuesday to determine whether he’s guilty of seven counts of fraud and conspiracy.",
+        "The prosecution painted Bankman-Fried as someone who knowingly committed fraud to achieve great wealth, power and influence, while the defense countered that the FTX founder acted in good faith, never meant to commit fraud or steal and basically got in over his head."
+      ],
+      "source_doc": [
+        "SBF Trial: The latest updates from the FTX collapse’s courtroom drama",
+        "SBF’s trial starts soon, but how did he — and FTX — get here?",
+        "Sam Altman backs teens’ startup, Google unveils the Pixel 8 and TikTok tests an ad-free tier"
+      ],
+      "difficulty": "temporal_query"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+大语言模型基础
+
+一、Transformer架构
+
+Transformer是当前所有大语言模型的核心架构，由Google在2017年的论文"Attention Is All You Need"中提出。Transformer完全抛弃了RNN的循环结构，仅依赖注意力机制进行序列建模，实现了高度并行化的训练。其架构由编码器（Encoder）和解码器（Decoder）组成，其中编码器用于理解输入序列，解码器用于生成输出序列。当前主流的大语言模型（如GPT系列）采用仅解码器（Decoder-Only）架构，而BERT等模型采用仅编码器架构。Transformer的关键组件包括：多头注意力层、前馈神经网络层、残差连接和层归一化。
+
+二、注意力机制
+
+注意力机制（Attention Mechanism）是Transformer的核心创新。自注意力（Self-Attention）机制通过计算序列中每个位置与其他所有位置的相关性权重来捕捉上下文信息。具体计算过程为：将输入通过三个线性变换得到Query（Q）、Key（K）、Value（V）矩阵，然后计算Attention(Q,K,V)=softmax(QK^T/sqrt(d_k))V，其中d_k是Key的维度，除以sqrt(d_k)是为了防止点积值过大。多头注意力（Multi-Head Attention）将注意力计算分为多个头并行进行，每个头关注不同的语义子空间，最后拼接合并，从而增强模型的表达能力。
+
+三、大语言模型训练
+
+大语言模型的训练分为两个主要阶段：（1）预训练（Pre-training）：在海量文本数据上通过自回归语言建模（预测下一个Token）进行无监督训练，学习语言知识和世界知识，这一阶段需要大量计算资源（数千GPU训练数周到数月）；（2）后训练（Post-training）：包括监督微调（SFT，使用高质量的指令-回答对数据）和基于人类反馈的强化学习（RLHF），使模型学会遵循指令并生成符合人类偏好的回答。预训练决定了模型的知识和能力上限，后训练则决定了模型的行为和对齐程度。
+
+四、对齐（Alignment）
+
+对齐是指让大语言模型的行为与人类价值观和意图保持一致的过程。RLHF（Reinforcement Learning from Human Feedback）是目前最主流的对齐方法：先收集人类对模型输出的偏好排序数据，训练一个奖励模型（Reward Model），然后用PPO等强化学习算法优化语言模型使其最大化奖励。DPO（Direct Preference Optimization）是RLHF的简化替代方案，无需单独训练奖励模型，直接利用偏好数据优化策略模型。对齐的目标通常概括为三个维度：有帮助（Helpful）、诚实（Honest）、无害（Harmless），即HHH原则。

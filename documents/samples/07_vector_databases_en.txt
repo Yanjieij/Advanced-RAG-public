@@ -1,0 +1,142 @@
+Vector Databases and Approximate Nearest Neighbor Search: Architecture and Algorithms
+
+1. Why Vector Databases?
+
+The rise of embedding models has created a fundamental need: given a query vector, find the most similar vectors from a collection of millions or billions of stored vectors. This operation — nearest neighbor search in high-dimensional space — is at the heart of modern retrieval systems, recommendation engines, and RAG pipelines.
+
+A naive brute-force approach computes the distance between the query and every stored vector, requiring O(n*d) time where n is the collection size and d is the vector dimension. For a collection of 100 million 1536-dimensional vectors, this means approximately 150 billion floating-point operations per query — far too slow for production systems that require sub-100ms latency.
+
+Vector databases solve this through Approximate Nearest Neighbor (ANN) algorithms, which trade a small amount of accuracy for orders-of-magnitude speedup. The key insight is that we don't need the exact nearest neighbors — finding vectors that are "close enough" is sufficient for most retrieval tasks.
+
+2. Distance Metrics
+
+The choice of distance metric determines how similarity is measured:
+
+Cosine Similarity: Measures the angle between two vectors, ignoring magnitude. Defined as cos(θ) = (A·B) / (||A|| * ||B||). Range: [-1, 1] where 1 means identical direction. Most commonly used for text embeddings because embedding models typically produce normalized vectors, making cosine similarity equivalent to dot product.
+
+Euclidean Distance (L2): Measures the straight-line distance between two points. Defined as ||A-B|| = sqrt(Σ(ai-bi)^2). Range: [0, ∞) where 0 means identical. Sensitive to vector magnitude. Preferred when the magnitude of the embedding carries semantic information.
+
+Inner Product (Dot Product): Defined as A·B = Σ(ai*bi). Equivalent to cosine similarity when vectors are normalized. Computationally the cheapest metric. Used internally by many ANN algorithms even when the user-facing metric is cosine or L2.
+
+Maximum Inner Product Search (MIPS) is a related problem where we want to maximize dot product rather than minimize distance. This arises naturally in recommendation systems where user and item embeddings are not normalized.
+
+3. Inverted File Index (IVF)
+
+IVF is one of the oldest and most widely used ANN indexing strategies. The algorithm has two phases:
+
+Training (offline):
+(a) Run k-means clustering on the vector collection to produce C centroids (typically C = sqrt(n) to 4*sqrt(n))
+(b) Assign each vector to its nearest centroid, creating C inverted lists
+
+Search (online):
+(a) Find the nprobe nearest centroids to the query vector
+(b) Compute exact distances only against vectors in those nprobe lists
+(c) Return the top-k results
+
+By searching only nprobe (typically 8-64) out of C clusters, IVF reduces the search space dramatically. For 100 million vectors with C=10000 centroids and nprobe=32, we search only 0.32% of the collection.
+
+The key trade-off is nprobe: higher values improve recall (accuracy) but increase latency. A common configuration achieving 95%+ recall on SIFT-1M benchmark uses C=1024 with nprobe=64.
+
+IVF can be combined with Product Quantization (IVF-PQ) or scalar quantization (IVF-SQ8) to reduce memory usage, as described below.
+
+4. Hierarchical Navigable Small World (HNSW)
+
+HNSW is the dominant ANN algorithm in modern vector databases, consistently achieving the best recall-speed trade-off across benchmarks. It is a graph-based method inspired by the mathematical concept of small-world networks.
+
+Core Idea: Build a multi-layer graph where:
+- Layer 0 (bottom): Contains ALL vectors, connected to their nearest neighbors
+- Layer 1: Contains a random subset of vectors (~1/M_L of layer 0)
+- Layer 2: Contains a subset of layer 1
+- ...
+- Layer L (top): Contains very few vectors
+
+Navigation works from top to bottom:
+(a) Start at the entry point in the top layer
+(b) Greedily navigate to the nearest neighbor of the query in the current layer
+(c) Drop to the next layer and repeat
+(d) At layer 0, perform a more thorough beam search
+
+Key Parameters:
+- M: Maximum number of connections per node (typically 16-64). Higher M increases recall but also memory and build time
+- ef_construction: Beam width during index building (typically 100-400). Higher values create better graphs but slower build time
+- ef_search: Beam width during search (typically 50-200). This is the primary recall-speed knob at query time
+
+HNSW achieves O(log n) average search time with high recall. For 1 million 128-dimensional vectors, HNSW achieves 95% recall@10 at ~1ms query time — about 1000x faster than brute force.
+
+Memory overhead is significant: each vector requires storing M*2 neighbor IDs (assuming bidirectional edges), plus the vector itself. For d=1536 with FP32 storage and M=32, memory per vector is approximately 1536*4 + 32*2*4 = 6400 bytes.
+
+5. Product Quantization (PQ)
+
+Product Quantization compresses vectors to dramatically reduce memory usage, enabling billion-scale collections on commodity hardware.
+
+The algorithm divides each d-dimensional vector into m sub-vectors of dimension d/m, then independently quantizes each sub-vector using k-means with k=256 centroids (1 byte per sub-vector).
+
+Training:
+(a) Split all vectors into m groups of d/m dimensions
+(b) Run k-means with 256 centroids on each group independently
+(c) Store the m codebooks (m * 256 * d/m * 4 bytes)
+
+Encoding:
+(a) For each vector, find the nearest centroid in each sub-vector space
+(b) Store only the m centroid indices (m bytes total per vector)
+
+A 1536-dimensional FP32 vector (6144 bytes) compressed with m=96 sub-quantizers becomes just 96 bytes — a 64x compression ratio.
+
+Distance computation uses precomputed lookup tables: before scanning, compute the distance from the query sub-vectors to all 256 centroids in each group (m * 256 distances). Then the distance to any database vector is approximated by summing m table lookups — much faster than computing the full vector distance.
+
+The quality trade-off: PQ introduces quantization error. With m=96 on 1536-dim vectors (16 dims per sub-quantizer), the recall typically drops by 5-10% compared to exact search. Using Optimized Product Quantization (OPQ), which rotates the vector space before quantization to minimize error, can recover 2-3% of this loss.
+
+6. Scalar Quantization
+
+A simpler alternative to PQ is scalar quantization, which independently quantizes each dimension:
+
+SQ8 (INT8): Map each dimension from its [min, max] range to [0, 255]. Compression: 4x (FP32 → INT8). Recall loss: typically 1-2%.
+
+SQ4 (INT4): Map to [0, 15]. Compression: 8x. Recall loss: 3-5%.
+
+Binary Quantization: Map each dimension to 0 or 1 based on sign. Compression: 32x. Distance computed using Hamming distance (popcount instruction). Recall loss: 10-20%, but extremely fast — useful as a first-stage filter.
+
+Modern systems like Qdrant use oversampling with binary quantization: retrieve 4x candidates using binary search, then rerank using original vectors for the final top-k. This achieves near-lossless recall at 10-20x speedup.
+
+7. Vector Database Architectures
+
+Production vector databases must handle not just ANN search but also:
+
+Filtering: Queries like "find similar vectors WHERE category='electronics' AND price < 100". This requires combining ANN search with metadata filtering. Two approaches:
+- Pre-filtering: Apply metadata filter first, then search only matching vectors. Fast when the filter is selective, but may miss good candidates.
+- Post-filtering: Run ANN search first, then filter results. Works well when filter matches most documents, but wastes compute when filter is very selective.
+- Hybrid: Modern systems like Weaviate and Qdrant use HNSW with filterable edges or segment-level pre-filtering.
+
+Real-time Updates: Supporting insertions and deletions without rebuilding the entire index. HNSW handles insertions naturally (new nodes are connected to existing neighbors). Deletions are trickier — most systems use soft deletion with periodic compaction.
+
+Multi-tenancy: Isolating data between users/organizations. ChromaDB uses collections, Pinecone uses namespaces, Weaviate uses class-based schemas. The key challenge is maintaining per-tenant index quality when tenant sizes vary by orders of magnitude.
+
+8. ChromaDB Architecture
+
+ChromaDB is an open-source embedding database designed for simplicity and developer experience. Its architecture includes:
+
+Storage: Documents, embeddings, and metadata are stored in SQLite (single-node) or distributed storage. Each collection maintains its own HNSW index.
+
+Index: Uses hnswlib (C++ HNSW implementation) with default parameters M=16, ef_construction=100. The index is built incrementally — new vectors are added to the existing graph without rebuilding.
+
+API: Provides both in-process (Python) and client-server (HTTP) modes. The HTTP server supports concurrent access from multiple clients.
+
+Query Flow:
+(a) Client sends query embedding + optional metadata filter
+(b) Server performs HNSW search to find candidate vectors
+(c) Metadata filtering is applied post-retrieval
+(d) Results (documents, metadata, distances) are returned
+
+ChromaDB excels at prototyping and small-to-medium collections (up to ~10M vectors). For larger scales, dedicated vector databases like Milvus, Qdrant, or Pinecone offer better performance through distributed architectures, advanced indexing (DiskANN, GPU-accelerated search), and sophisticated caching strategies.
+
+9. Benchmarking Considerations
+
+When evaluating vector database performance, key metrics include:
+
+- Recall@k: What fraction of the true k nearest neighbors are returned? Target: >95% for most applications.
+- Queries Per Second (QPS): Throughput under concurrent load. Production systems typically need 100-10000 QPS depending on application.
+- P99 Latency: The 99th percentile query time. More important than average latency for SLA compliance. Target: <50ms for real-time applications.
+- Index Build Time: How long to index the full collection. Critical for systems that need frequent reindexing.
+- Memory Usage: Total RAM required. Determines hardware costs. PQ can reduce this by 4-64x.
+
+The ANN Benchmarks project (ann-benchmarks.com) provides standardized comparisons across algorithms and implementations. As of 2024, HNSW-based systems (hnswlib, Faiss-HNSW) consistently dominate the recall-speed Pareto frontier for in-memory search, while DiskANN leads for disk-based search at billion scale.

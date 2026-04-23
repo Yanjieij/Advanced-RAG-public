@@ -1,0 +1,181 @@
+Prompt Engineering and In-Context Learning: Principles, Techniques, and Practical Patterns
+
+1. The Paradigm Shift: From Fine-Tuning to Prompting
+
+Traditional NLP systems required task-specific training: collecting labeled data, fine-tuning a model, and deploying a specialized checkpoint for each task. The emergence of large language models (LLMs) introduced a fundamentally different paradigm — in-context learning (ICL), where a single general-purpose model can perform diverse tasks by conditioning on natural language instructions and examples provided in the prompt.
+
+This shift has profound implications. Instead of training a sentiment classifier on 50,000 labeled reviews, you can write: "Classify the sentiment of the following review as positive, negative, or neutral: [review text]". The model's ability to follow such instructions emerges from its pre-training on diverse text, where it has implicitly learned the structure of countless NLP tasks.
+
+In-context learning was first systematically studied in the GPT-3 paper (Brown et al., 2020), which demonstrated that performance scales with model size and the number of in-context examples. Key findings:
+- Zero-shot (instruction only): Works for simple, well-defined tasks
+- Few-shot (instruction + examples): Dramatically improves performance, especially for complex or ambiguous tasks
+- The format and quality of examples matter more than their quantity
+
+2. Prompt Structure and Components
+
+An effective prompt typically contains several components, each serving a distinct purpose:
+
+System Instruction: Defines the model's role, behavior constraints, and output format. This establishes the "frame" within which the model operates.
+
+Example: "You are a medical coding specialist. Given a clinical note, extract all ICD-10 codes with their descriptions. Output as a JSON array."
+
+Context/Background: Provides domain-specific information the model needs to complete the task. In RAG systems, this is where retrieved documents are injected.
+
+Task Description: The specific instruction for what the model should do with the input. Clarity and specificity are crucial — ambiguous instructions lead to unpredictable outputs.
+
+Input Data: The actual content to be processed.
+
+Output Format Specification: Explicit description of the expected response structure. This is one of the most impactful components — specifying "respond in JSON with keys: category, confidence, reasoning" dramatically improves output consistency.
+
+Few-Shot Examples: Input-output pairs that demonstrate the expected behavior. These serve as an implicit specification of the task that can be more precise than natural language descriptions.
+
+3. Chain-of-Thought (CoT) Prompting
+
+Chain-of-thought prompting, introduced by Wei et al. (2022), instructs the model to generate intermediate reasoning steps before producing the final answer. This technique has shown dramatic improvements on tasks requiring multi-step reasoning, arithmetic, and logical deduction.
+
+Standard prompting:
+  Q: Roger has 5 tennis balls. He buys 2 more cans of 3. How many does he have now?
+  A: 11
+
+Chain-of-thought prompting:
+  Q: Roger has 5 tennis balls. He buys 2 more cans of 3. How many does he have now?
+  A: Roger started with 5 balls. He bought 2 cans of 3 balls each, so 2 × 3 = 6 new balls. Total: 5 + 6 = 11.
+
+Key variants of CoT:
+
+Zero-shot CoT: Simply append "Let's think step by step" to the prompt. Surprisingly effective — this single phrase can improve accuracy on GSM8K math problems from 17.7% to 78.7% for certain models.
+
+Self-Consistency: Generate multiple CoT reasoning paths (with temperature > 0) and take the majority vote on the final answer. This exploits the observation that correct reasoning paths tend to converge on the same answer, while incorrect paths diverge. Typical configurations use 5-20 samples. Self-consistency improves GSM8K accuracy from 78.7% to 87.1% over standard CoT.
+
+Tree of Thoughts (ToT): Extends CoT by allowing the model to explore multiple reasoning branches at each step, evaluate intermediate states, and backtrack when a path seems unpromising. This enables more deliberate problem-solving strategies similar to human planning.
+
+4. ReAct: Reasoning and Acting
+
+ReAct (Reason + Act) combines chain-of-thought reasoning with the ability to take actions in an external environment. The model alternates between:
+- Thought: Internal reasoning about the current situation
+- Action: Calling an external tool (search engine, calculator, API, code interpreter)
+- Observation: Processing the result of the action
+
+This pattern is foundational to modern AI agent systems. A typical ReAct trace:
+
+Question: What is the population of the capital of the country that won the 2022 FIFA World Cup?
+
+Thought 1: I need to find which country won the 2022 World Cup.
+Action 1: Search("2022 FIFA World Cup winner")
+Observation 1: Argentina won the 2022 FIFA World Cup.
+
+Thought 2: The capital of Argentina is Buenos Aires. Let me find its population.
+Action 2: Search("Buenos Aires population 2023")
+Observation 2: Buenos Aires has a population of approximately 3.1 million in the city proper.
+
+Thought 3: I now have the answer.
+Final Answer: The population of Buenos Aires, the capital of Argentina (2022 World Cup winner), is approximately 3.1 million.
+
+5. Retrieval-Augmented Generation (RAG) Prompting Patterns
+
+RAG introduces unique prompting challenges because the model must synthesize information from retrieved contexts while avoiding hallucination. Key patterns:
+
+Stuffing Pattern: The simplest approach — concatenate all retrieved chunks into the context and ask the model to answer.
+
+Template:
+  "Based on the following context, answer the question.
+   Context: [chunk1] [chunk2] [chunk3]
+   Question: [query]
+   Answer:"
+
+Refine Pattern: Process chunks sequentially, refining the answer with each new chunk. This handles cases where the answer spans multiple chunks.
+
+  Step 1: Answer based on chunk 1
+  Step 2: "Given your previous answer and this additional context, refine your answer: [chunk 2]"
+  Step 3: Repeat until all chunks are processed
+
+Map-Reduce Pattern: For summarization tasks over many chunks.
+  Map: Summarize each chunk independently
+  Reduce: Combine all summaries into a final answer
+
+Citation Pattern: Force the model to cite specific sources for each claim, enabling verification.
+
+Template:
+  "Answer the question using ONLY the provided sources.
+   For each claim in your answer, cite the source number in brackets [1], [2], etc.
+   If the sources don't contain enough information, say 'I don't have enough information.'
+
+   Sources:
+   [1] [chunk1]
+   [2] [chunk2]
+
+   Question: [query]"
+
+The citation pattern is particularly important for production RAG systems because it enables:
+- User verification of claims against source documents
+- Identification of hallucinations (claims without citations)
+- Feedback loops for improving retrieval quality
+
+6. Output Format Control
+
+Controlling the output format is critical for downstream processing. Effective techniques:
+
+JSON Mode: Modern APIs offer native JSON mode, but prompt engineering provides additional control.
+
+Template:
+  "Extract the following fields from the text:
+   - name (string)
+   - age (integer or null if not mentioned)
+   - occupation (string)
+
+   Respond with ONLY a valid JSON object. Example:
+   {"name": "John", "age": 30, "occupation": "engineer"}
+
+   Text: [input]"
+
+XML Tags: Using XML-style tags to delimit sections improves parsing reliability.
+
+Template:
+  "Analyze the sentiment of the review.
+   <analysis>Your detailed analysis here</analysis>
+   <sentiment>positive|negative|neutral</sentiment>
+   <confidence>0.0-1.0</confidence>"
+
+Constrained Decoding: Some frameworks (Outlines, LMQL) can enforce output structure at the token level by masking logits that would violate a grammar or schema. This guarantees valid JSON/XML without relying on the model's compliance.
+
+7. Advanced Techniques
+
+Least-to-Most Prompting: Decompose complex problems into simpler sub-problems, solve them in order, and use earlier solutions to inform later ones. Unlike CoT which plans the full reasoning chain at once, least-to-most explicitly identifies sub-problems first.
+
+Step 1: "What sub-problems must be solved to answer: [complex question]?"
+Step 2: Solve each sub-problem sequentially, providing previous answers as context.
+
+Analogical Prompting: Instead of providing examples directly, ask the model to recall or generate relevant examples from its training data before solving the problem.
+
+Template: "Recall a similar problem you've encountered and its solution, then use that approach to solve: [problem]"
+
+Prompt Chaining: Break complex tasks into a pipeline of simpler prompts, where each step's output feeds into the next. Benefits: easier debugging, ability to use different models/temperatures for different steps, intermediate validation.
+
+Example pipeline for document analysis:
+  Step 1 (extraction): Extract all named entities → entities list
+  Step 2 (classification): Classify each entity → categorized entities
+  Step 3 (relation): Identify relationships between entities → knowledge graph
+  Step 4 (summary): Summarize findings → final report
+
+8. Common Pitfalls and Best Practices
+
+Pitfall: Instruction Following Failures
+- Models may ignore complex multi-part instructions
+- Solution: Number your instructions, use clear delimiters, repeat critical constraints
+
+Pitfall: Positional Bias
+- Models attend more to information at the beginning and end of the context (the "lost in the middle" phenomenon)
+- Solution: Place the most important context at the beginning or end, not in the middle
+
+Pitfall: Sensitivity to Example Order
+- Few-shot performance can vary significantly based on the order of examples
+- Solution: Use diverse, representative examples; test multiple orderings
+
+Pitfall: Hallucination in RAG
+- Models may generate information not present in the retrieved context
+- Solution: Explicitly instruct "answer ONLY based on the provided context"; use citation patterns; add "if the information is not in the context, say so"
+
+Best Practice: Iterative Refinement
+- Start with a simple prompt, test on representative examples, and iteratively refine
+- Track prompt versions and their performance metrics
+- Use evaluation datasets to measure the impact of prompt changes quantitatively

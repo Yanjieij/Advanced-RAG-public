@@ -1,0 +1,124 @@
+{
+  "description": "Auto-generated evaluation dataset for samples (11 questions)",
+  "version": "1.0",
+  "generated_at": "2026-04-01T19:57:27.466215",
+  "generator_model": "glm-4-flash",
+  "generator": "RAGAS TestsetGenerator",
+  "questions": [
+    {
+      "id": 1,
+      "question": "What is the primary difference between the original Transformer's architecture and a decoder-only model?",
+      "ground_truth": "The original Transformer used an encoder-decoder architecture, where the encoder processes the full input with bidirectional self-attention and the decoder generates output autoregressively with causal (masked) attention over its own outputs plus cross-attention to the encoder. In contrast, a decoder-only model focuses on efficient language generation and inference.",
+      "ground_truth_contexts": [
+        "6.Encoder-Decoder vs.Decoder-OnlyThe original Transformer used an encoder-decoder architecture: the encoder processes the full input with bidirectional self-attention, and the decoder generates output autoregressively with causal (masked) attention over its own outputs plus cross-attention to the encoder."
+      ],
+      "source_doc": "single_hop_specific_query_synthesizer",
+      "difficulty": "simple"
+    },
+    {
+      "id": 2,
+      "question": "What is the abbreviation 'tn' referring to in the context of neural network architectures for language modeling?",
+      "ground_truth": "The abbreviation 'tn' refers to 'tn+1', which is mentioned in the context as a part of decoder-only models in neural network architectures for language modeling.",
+      "ground_truth_contexts": [
+        ".., tn], predict tn+1Decoder-only models have several advantages for language modeling: they naturally support arbitrary-length generation, they can be efficiently trained on any text corpus without needing paired input-output data, and the causal attention mask enables efficient KV-cache based inference."
+      ],
+      "source_doc": "single_hop_specific_query_synthesizer",
+      "difficulty": "simple"
+    },
+    {
+      "id": 3,
+      "question": "What are the primary limitations of Recurrent Neural Networks (RNNs) in the context of natural language processing, and how do they affect their performance?",
+      "ground_truth": "Recurrent Neural Networks (RNNs) face two primary limitations in natural language processing. The first is the vanishing gradient problem, which hinders the network's ability to capture long-range dependencies. The second limitation is the inherently sequential nature of computation, which prevents parallelization during training and can impact the efficiency of the model.",
+      "ground_truth_contexts": [
+        "While effective for short sequences, RNNs suffer from two fundamental limitations: the vanishing gradient problem, which makes it difficult to capture long-range dependencies, and the inherently sequential nature of computation, which prevents parallelization during training."
+      ],
+      "source_doc": "single_hop_specific_query_synthesizer",
+      "difficulty": "simple"
+    },
+    {
+      "id": 4,
+      "question": "What is ICL and how does it differ from traditional LLM paradigms?",
+      "ground_truth": "ICL, or in-context learning, is a paradigm introduced with the emergence of large language models (LLMs). It allows a single general-purpose model to perform diverse tasks by conditioning on natural language instructions and examples provided in the prompt, which is fundamentally different from traditional LLM paradigms.",
+      "ground_truth_contexts": [
+        "The emergence of large language models (LLMs) introduced a fundamentally different paradigm — in-context learning (ICL), where a single general-purpose model can perform diverse tasks by conditioning on natural language instructions and examples provided in the prompt."
+      ],
+      "source_doc": "single_hop_specific_query_synthesizer",
+      "difficulty": "simple"
+    },
+    {
+      "id": 5,
+      "question": "What is the difference between Linear Attention in RWKV and Sparse Attention in Longformer, BigBird in terms of selected tokens?",
+      "ground_truth": "In RWKV, Linear Attention has a complexity of O(n * w) where w is the window size and uses a feature map phi to replace softmax(QK^T)V with phi(Q)(phi(K)^T V). In contrast, Sparse Attention in Longformer and BigBird replaces full attention with a combination of local sliding window attention and global attention on selected tokens.",
+      "ground_truth_contexts": [
+        "<1-hop>\n\nComplexity: O(n * w) where w is the window size.Linear Attention (Performer, RWKV): Replace softmax(QK^T)V with phi(Q)(phi(K)^T V), where phi is a feature map.",
+        "<2-hop>\n\nSparse Attention (Longformer, BigBird): Replace full attention with a combination of local sliding window attention and global attention on selected tokens."
+      ],
+      "source_doc": "multi_hop_abstract_query_synthesizer",
+      "difficulty": "inference"
+    },
+    {
+      "id": 6,
+      "question": "What is the significance of selected tokens in the context of the RWKV architecture and how does it relate to the complexity of linear attention?",
+      "ground_truth": "The significance of selected tokens in the context of the RWKV architecture is that it allows for a more focused and efficient attention mechanism. In the case of linear attention, this is achieved by replacing the full attention mechanism with a combination of local sliding window attention and global attention on selected tokens. This approach reduces the complexity from O(n * w) to a more manageable level, where n is the sequence length and w is the window size. The use of selected tokens in the RWKV architecture helps in processing large sequences more effectively, which is crucial for natural language processing tasks.",
+      "ground_truth_contexts": [
+        "<1-hop>\n\nComplexity: O(n * w) where w is the window size.Linear Attention (Performer, RWKV): Replace softmax(QK^T)V with phi(Q)(phi(K)^T V), where phi is a feature map.",
+        "<2-hop>\n\nSparse Attention (Longformer, BigBird): Replace full attention with a combination of local sliding window attention and global attention on selected tokens."
+      ],
+      "source_doc": "multi_hop_abstract_query_synthesizer",
+      "difficulty": "inference"
+    },
+    {
+      "id": 7,
+      "question": "How do sequence lengths and self-attention contribute to the effectiveness of neural network architectures for sequence processing tasks?",
+      "ground_truth": "Sequence lengths contribute to the effectiveness of neural network architectures for sequence processing tasks by allowing the model to attend to relative positions, which can be expressed as a linear function of positional encodings. This property helps the model generalize to sequence lengths not seen during training. Self-attention, also known as scaled dot-product attention, is a key innovation that enables each token in a sequence to attend to every other token, including itself, enhancing the model's ability to process sequences effectively.",
+      "ground_truth_contexts": [
+        "<1-hop>\n\nThese encodings have useful properties: they allow the model to attend to relative positions (since PE(pos+k) can be expressed as a linear function of PE(pos)), and they generalize to sequence lengths not seen during training.",
+        "<2-hop>\n\nThe key innovation is self-attention (also called scaled dot-product attention), where each token in a sequence attends to every other token, including itself."
+      ],
+      "source_doc": "multi_hop_abstract_query_synthesizer",
+      "difficulty": "inference"
+    },
+    {
+      "id": 8,
+      "question": "How do relative positions and self-attention contribute to the effectiveness of decoder-only models in language generation and inference?",
+      "ground_truth": "Relative positions in decoder-only models allow the model to attend to the positions of tokens in a sequence, which is expressed as a linear function of positional encoding (PE). This feature is useful because it enables the model to generalize to sequence lengths not seen during training. Self-attention, also known as scaled dot-product attention, is a key innovation where each token in a sequence attends to every other token, including itself. This mechanism is permutation-invariant, meaning it treats the input as a set, not a sequence, and requires explicit injection of positional information to maintain the necessary positional context.",
+      "ground_truth_contexts": [
+        "<1-hop>\n\nThese encodings have useful properties: they allow the model to attend to relative positions (since PE(pos+k) can be expressed as a linear function of PE(pos)), and they generalize to sequence lengths not seen during training.",
+        "<2-hop>\n\n4.Positional EncodingSince self-attention is permutation-invariant (it treats the input as a set, not a sequence), positional information must be explicitly injected.",
+        "<3-hop>\n\nThe key innovation is self-attention (also called scaled dot-product attention), where each token in a sequence attends to every other token, including itself."
+      ],
+      "source_doc": "multi_hop_abstract_query_synthesizer",
+      "difficulty": "inference"
+    },
+    {
+      "id": 9,
+      "question": "What are the key differences between zero-shot and few-shot learning in the context of instruction-only tasks?",
+      "ground_truth": "In the context of instruction-only tasks, zero-shot learning refers to the ability to work for simple, well-defined tasks without any examples. On the other hand, few-shot learning involves using a small number of examples along with instructions to dramatically improve performance, particularly for complex or ambiguous tasks.",
+      "ground_truth_contexts": [
+        "<1-hop>\n\nKey findings:- Zero-shot (instruction only): Works for simple, well-defined tasks- Few-shot (instruction + examples): Dramatically improves performance, especially for complex or ambiguous tasks"
+      ],
+      "source_doc": "multi_hop_specific_query_synthesizer",
+      "difficulty": "cross_document"
+    },
+    {
+      "id": 10,
+      "question": "What properties do these encodings have that allow the model to attend to relative positions and generalize to sequence lengths not seen during training?",
+      "ground_truth": "These encodings have useful properties that allow the model to attend to relative positions, as they can be expressed as a linear function of PE(pos+k). Additionally, they generalize to sequence lengths not seen during training.",
+      "ground_truth_contexts": [
+        "<1-hop>\n\nThese encodings have useful properties: they allow the model to attend to relative positions (since PE(pos+k) can be expressed as a linear function of PE(pos)), and they generalize to sequence lengths not seen during training."
+      ],
+      "source_doc": "multi_hop_specific_query_synthesizer",
+      "difficulty": "cross_document"
+    },
+    {
+      "id": 11,
+      "question": "What is a method used to reduce memory usage in neural network applications?",
+      "ground_truth": "Product Quantization (PQ) is a method used to compress vectors, which dramatically reduces memory usage and enables billion-scale collections on commodity hardware.",
+      "ground_truth_contexts": [
+        "<1-hop>\n\n5.Product Quantization (PQ)Product Quantization compresses vectors to dramatically reduce memory usage, enabling billion-scale collections on commodity hardware."
+      ],
+      "source_doc": "multi_hop_specific_query_synthesizer",
+      "difficulty": "cross_document"
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+Attention Mechanisms and Transformer Architecture: A Technical Deep Dive
+
+1. The Evolution of Sequence Modeling
+
+Before the Transformer architecture was introduced, recurrent neural networks (RNNs) and their variants — Long Short-Term Memory (LSTM) networks and Gated Recurrent Units (GRUs) — dominated sequence modeling tasks. These architectures process tokens sequentially, maintaining a hidden state that is updated at each time step. While effective for short sequences, RNNs suffer from two fundamental limitations: the vanishing gradient problem, which makes it difficult to capture long-range dependencies, and the inherently sequential nature of computation, which prevents parallelization during training.
+
+The attention mechanism was first introduced as an augmentation to encoder-decoder RNN architectures for machine translation. In the original formulation by Bahdanau et al. (2014), the decoder at each step computes a weighted sum over all encoder hidden states, where the weights (attention scores) indicate the relevance of each source token to the current decoding step. This allowed the model to directly access information from any position in the input sequence, partially alleviating the long-range dependency problem. However, the underlying RNN still processed tokens sequentially.
+
+2. Self-Attention: The Core Innovation
+
+The Transformer architecture, introduced in the landmark paper "Attention Is All You Need" by Vaswani et al. (2017), eliminated recurrence entirely and relied solely on attention mechanisms. The key innovation is self-attention (also called scaled dot-product attention), where each token in a sequence attends to every other token, including itself.
+
+The self-attention mechanism operates through three learned linear projections of the input:
+- Query (Q): What information is this token looking for?
+- Key (K): What information does this token contain?
+- Value (V): What information should this token provide if selected?
+
+The attention computation follows these steps:
+(a) Compute dot products between each query and all keys: QK^T
+(b) Scale by the square root of the key dimension: QK^T / sqrt(d_k)
+(c) Apply softmax to obtain attention weights
+(d) Multiply weights by values to get the output
+
+The scaling factor sqrt(d_k) is critical — without it, the dot products can grow very large for high-dimensional keys, pushing the softmax function into regions with extremely small gradients. This scaling ensures stable training across different model sizes.
+
+The computational complexity of self-attention is O(n^2 * d), where n is the sequence length and d is the model dimension. This quadratic dependency on sequence length is one of the primary challenges when applying Transformers to very long sequences — a topic that has spawned extensive research into efficient attention variants.
+
+3. Multi-Head Attention
+
+Rather than computing a single attention function, the Transformer uses multi-head attention. The input is projected into h different subspaces (heads), attention is computed independently in each subspace, and the results are concatenated and linearly projected.
+
+Each head can learn to attend to different types of relationships:
+- Head 1 might focus on syntactic dependencies (subject-verb agreement)
+- Head 2 might capture positional proximity
+- Head 3 might track coreference (pronoun resolution)
+- Head 4 might identify semantic similarity
+
+The original Transformer used h=8 heads with d_model=512, giving each head a dimension of d_k = d_v = d_model/h = 64. Modern large language models use significantly more heads — GPT-3 uses 96 heads with d_model=12288, and LLaMA-70B uses 64 heads with d_model=8192.
+
+4. Positional Encoding
+
+Since self-attention is permutation-invariant (it treats the input as a set, not a sequence), positional information must be explicitly injected. The original Transformer uses sinusoidal positional encodings:
+
+PE(pos, 2i) = sin(pos / 10000^(2i/d_model))
+PE(pos, 2i+1) = cos(pos / 10000^(2i/d_model))
+
+These encodings have useful properties: they allow the model to attend to relative positions (since PE(pos+k) can be expressed as a linear function of PE(pos)), and they generalize to sequence lengths not seen during training.
+
+Modern models have largely moved to learned positional embeddings or Rotary Position Embeddings (RoPE). RoPE, used by LLaMA, PaLM, and many other models, encodes position information by rotating the query and key vectors in the complex plane. The rotation angle is proportional to the position, so the dot product between a query at position m and a key at position n depends only on the relative position (m-n). RoPE has proven particularly effective for length generalization — models trained with RoPE on shorter sequences can often handle longer sequences at inference time with techniques like NTK-aware scaling or YaRN.
+
+5. The Complete Transformer Block
+
+A Transformer block consists of two sub-layers, each with a residual connection and layer normalization:
+
+Sub-layer 1: Multi-Head Self-Attention
+  x' = LayerNorm(x + MultiHeadAttention(x, x, x))
+
+Sub-layer 2: Position-wise Feed-Forward Network
+  output = LayerNorm(x' + FFN(x'))
+
+The feed-forward network consists of two linear transformations with a nonlinearity (originally ReLU, now typically GeLU or SwiGLU):
+  FFN(x) = W2 * activation(W1 * x + b1) + b2
+
+The intermediate dimension of the FFN is typically 4x the model dimension. For a model with d_model=4096, the FFN hidden size would be 16384. Recent research by Anthropic and others has shown that the FFN layers serve as key-value memories, where the first layer's weights encode patterns and the second layer's weights store associated outputs.
+
+6. Encoder-Decoder vs. Decoder-Only
+
+The original Transformer used an encoder-decoder architecture: the encoder processes the full input with bidirectional self-attention, and the decoder generates output autoregressively with causal (masked) attention over its own outputs plus cross-attention to the encoder.
+
+Modern LLMs predominantly use decoder-only architectures (GPT series, LLaMA, Claude, Mistral). In this configuration:
+- There is no separate encoder — the input is simply prepended to the output
+- All attention is causal: each token can only attend to itself and preceding tokens
+- The model is trained with next-token prediction: given tokens [t1, ..., tn], predict tn+1
+
+Decoder-only models have several advantages for language modeling: they naturally support arbitrary-length generation, they can be efficiently trained on any text corpus without needing paired input-output data, and the causal attention mask enables efficient KV-cache based inference.
+
+7. Training at Scale: Key Innovations
+
+Training Transformer-based LLMs at scale has required several critical innovations:
+
+Mixed Precision Training: Using FP16 or BF16 for most computations while maintaining FP32 master weights. BF16 (Brain Float 16) is preferred because its exponent range matches FP32, avoiding overflow issues common with FP16. Typical training uses a mix: FP32 for accumulations and optimizer states, BF16 for forward and backward passes.
+
+Gradient Checkpointing: Trading compute for memory by recomputing intermediate activations during the backward pass instead of storing them. This reduces memory usage from O(L) to O(sqrt(L)) for L layers, enabling training of much deeper models.
+
+Model Parallelism: Distributing model parameters across multiple GPUs. Tensor parallelism splits individual layers across devices (e.g., splitting the attention heads), while pipeline parallelism places different layers on different devices. Combined with data parallelism (ZeRO optimizer), modern training systems can scale to thousands of GPUs.
+
+Flash Attention: An IO-aware attention algorithm that reduces memory reads/writes by fusing the attention computation into a single GPU kernel. Flash Attention computes attention in blocks, avoiding the need to materialize the full n×n attention matrix. This reduces memory from O(n^2) to O(n) and provides 2-4x wall-clock speedup.
+
+8. Efficient Attention Variants
+
+The quadratic complexity of standard attention has motivated extensive research:
+
+Sparse Attention (Longformer, BigBird): Replace full attention with a combination of local sliding window attention and global attention on selected tokens. Complexity: O(n * w) where w is the window size.
+
+Linear Attention (Performer, RWKV): Replace softmax(QK^T)V with phi(Q)(phi(K)^T V), where phi is a feature map. This can be computed in O(n * d^2) time using the associativity of matrix multiplication. However, linear attention models generally underperform standard attention on language modeling tasks.
+
+Mixture of Experts (MoE): While not strictly an attention variant, MoE scales model capacity without proportionally increasing compute. Each token is routed to a subset of expert FFN layers (typically 2 out of 8 or 16 experts). Mixtral 8x7B, for example, has 47B total parameters but only activates ~13B per token.
+
+Ring Attention: Distributes the sequence across devices and computes attention in a ring communication pattern, enabling context lengths of millions of tokens. Combined with Flash Attention, it enables training on sequences of 1M+ tokens.

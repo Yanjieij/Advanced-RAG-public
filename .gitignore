@@ -1,0 +1,54 @@
+# 环境变量（含 API Key）
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/
+
+# 本地索引缓存（按数据集生成，体积大）
+.index_cache/
+
+# 模型缓存（BGE-M3 等 HuggingFace 模型权重）
+bge_m3_cache/
+
+# 输出目录（评估结果、图表、日志）
+output/
+docs/
+
+# 图片（README 中引用的除外）
+*.png
+*.jpg
+*.pdf
+
+README.html
+
+# 自定义文档数据集（只上传 samples 和 multihop）
+documents/*/
+!documents/multihop_rag/
+!documents/samples/
+
+# 自定义评估数据集（只上传 samples 和 multihop）
+evaluation/__pycache__/
+evaluation/*.json
+!evaluation/samples_eval_dataset.json
+!evaluation/multihop_eval_dataset.json
+
+# Notebook 临时输出
+notebooks/result.txt
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
