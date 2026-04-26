@@ -94,6 +94,7 @@ advanced-rag/
 #### 全局模块架构
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","mainBkg":"#ffffff","primaryColor":"#f8fafc","primaryTextColor":"#0f172a","primaryBorderColor":"#334155","lineColor":"#475569","secondaryColor":"#eef6ff","tertiaryColor":"#fff7ed","clusterBkg":"#ffffff","clusterBorder":"#cbd5e1","edgeLabelBackground":"#ffffff","nodeTextColor":"#0f172a","actorBkg":"#f8fafc","actorBorder":"#334155","actorTextColor":"#0f172a","signalColor":"#475569","signalTextColor":"#0f172a","noteBkg":"#fff7ed","noteTextColor":"#0f172a","fontFamily":"Inter, ui-sans-serif, system-ui, sans-serif"}}}%%
 flowchart TB
     CLI["main.py CLI<br/>ingest / query / evaluate / generate-eval / dataset"]
     Config["config.py + .env<br/>模型、ChromaDB、分块、并发、RAGAS Judge"]
@@ -151,6 +152,7 @@ flowchart TB
 #### Ingest 入库主流程
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","mainBkg":"#ffffff","primaryColor":"#f8fafc","primaryTextColor":"#0f172a","primaryBorderColor":"#334155","lineColor":"#475569","secondaryColor":"#eef6ff","tertiaryColor":"#fff7ed","clusterBkg":"#ffffff","clusterBorder":"#cbd5e1","edgeLabelBackground":"#ffffff","nodeTextColor":"#0f172a","actorBkg":"#f8fafc","actorBorder":"#334155","actorTextColor":"#0f172a","signalColor":"#475569","signalTextColor":"#0f172a","noteBkg":"#fff7ed","noteTextColor":"#0f172a","fontFamily":"Inter, ui-sans-serif, system-ui, sans-serif"}}}%%
 flowchart LR
     Start(["python main.py ingest"])
     Docs["文档目录<br/>.txt / .md / .pdf"]
@@ -198,6 +200,7 @@ flowchart LR
 #### 查询与 8 种检索策略
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","mainBkg":"#ffffff","primaryColor":"#f8fafc","primaryTextColor":"#0f172a","primaryBorderColor":"#334155","lineColor":"#475569","secondaryColor":"#eef6ff","tertiaryColor":"#fff7ed","clusterBkg":"#ffffff","clusterBorder":"#cbd5e1","edgeLabelBackground":"#ffffff","nodeTextColor":"#0f172a","actorBkg":"#f8fafc","actorBorder":"#334155","actorTextColor":"#0f172a","signalColor":"#475569","signalTextColor":"#0f172a","noteBkg":"#fff7ed","noteTextColor":"#0f172a","fontFamily":"Inter, ui-sans-serif, system-ui, sans-serif"}}}%%
 flowchart TB
     Q["User Query"]
     Rewrite{"--rewrite?<br/>semantic_dual_path 自动跳过"}
@@ -249,6 +252,7 @@ flowchart TB
 #### 评估与缓存流水线
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","mainBkg":"#ffffff","primaryColor":"#f8fafc","primaryTextColor":"#0f172a","primaryBorderColor":"#334155","lineColor":"#475569","secondaryColor":"#eef6ff","tertiaryColor":"#fff7ed","clusterBkg":"#ffffff","clusterBorder":"#cbd5e1","edgeLabelBackground":"#ffffff","nodeTextColor":"#0f172a","actorBkg":"#f8fafc","actorBorder":"#334155","actorTextColor":"#0f172a","signalColor":"#475569","signalTextColor":"#0f172a","noteBkg":"#fff7ed","noteTextColor":"#0f172a","fontFamily":"Inter, ui-sans-serif, system-ui, sans-serif"}}}%%
 flowchart LR
     EvalCmd(["python main.py evaluate"])
     EvalSet["评估集 JSON<br/>question / ground_truth / contexts / difficulty"]
@@ -1098,6 +1102,7 @@ python main.py ingest -d samples --reset
 ```
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","mainBkg":"#ffffff","primaryColor":"#f8fafc","primaryTextColor":"#0f172a","primaryBorderColor":"#334155","lineColor":"#475569","secondaryColor":"#eef6ff","tertiaryColor":"#fff7ed","clusterBkg":"#ffffff","clusterBorder":"#cbd5e1","edgeLabelBackground":"#ffffff","nodeTextColor":"#0f172a","actorBkg":"#f8fafc","actorBorder":"#334155","actorTextColor":"#0f172a","signalColor":"#475569","signalTextColor":"#0f172a","noteBkg":"#fff7ed","noteTextColor":"#0f172a","fontFamily":"Inter, ui-sans-serif, system-ui, sans-serif"}}}%%
 flowchart TD
     A["Step 1<br/>load_documents()<br/>一次性加载全部文件"]
     B["Step 2<br/>preprocess()<br/>清理空白、规范换行"]
@@ -1133,6 +1138,7 @@ python main.py ingest -d wg2 --doc-dir documents/wg2 --reset --incremental
 ```
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","mainBkg":"#ffffff","primaryColor":"#f8fafc","primaryTextColor":"#0f172a","primaryBorderColor":"#334155","lineColor":"#475569","secondaryColor":"#eef6ff","tertiaryColor":"#fff7ed","clusterBkg":"#ffffff","clusterBorder":"#cbd5e1","edgeLabelBackground":"#ffffff","nodeTextColor":"#0f172a","actorBkg":"#f8fafc","actorBorder":"#334155","actorTextColor":"#0f172a","signalColor":"#475569","signalTextColor":"#0f172a","noteBkg":"#fff7ed","noteTextColor":"#0f172a","fontFamily":"Inter, ui-sans-serif, system-ui, sans-serif"}}}%%
 flowchart TD
     A["扫描文档目录<br/>得到 N 个 Document"]
     B["加载 .index_cache/{dataset}_chunks.pkl<br/>得到已处理 chunk_id 集合"]
@@ -1177,6 +1183,7 @@ flowchart TD
 **核心机制**：每个文件处理完后，将其 chunks 追加到 `.index_cache/{dataset}_chunks.pkl` 并立即保存。
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","mainBkg":"#ffffff","primaryColor":"#f8fafc","primaryTextColor":"#0f172a","primaryBorderColor":"#334155","lineColor":"#475569","secondaryColor":"#eef6ff","tertiaryColor":"#fff7ed","clusterBkg":"#ffffff","clusterBorder":"#cbd5e1","edgeLabelBackground":"#ffffff","nodeTextColor":"#0f172a","actorBkg":"#f8fafc","actorBorder":"#334155","actorTextColor":"#0f172a","signalColor":"#475569","signalTextColor":"#0f172a","noteBkg":"#fff7ed","noteTextColor":"#0f172a","fontFamily":"Inter, ui-sans-serif, system-ui, sans-serif"}}}%%
 sequenceDiagram
     participant Run1 as 首次运行 --reset
     participant Cache as chunks.pkl
@@ -1244,6 +1251,7 @@ python main.py dataset delete my_dataset
 Ingest 为每个 chunk 建立**两套完全独立的索引**：
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","mainBkg":"#ffffff","primaryColor":"#f8fafc","primaryTextColor":"#0f172a","primaryBorderColor":"#334155","lineColor":"#475569","secondaryColor":"#eef6ff","tertiaryColor":"#fff7ed","clusterBkg":"#ffffff","clusterBorder":"#cbd5e1","edgeLabelBackground":"#ffffff","nodeTextColor":"#0f172a","actorBkg":"#f8fafc","actorBorder":"#334155","actorTextColor":"#0f172a","signalColor":"#475569","signalTextColor":"#0f172a","noteBkg":"#fff7ed","noteTextColor":"#0f172a","fontFamily":"Inter, ui-sans-serif, system-ui, sans-serif"}}}%%
 flowchart LR
     Chunks["同一批 chunk 文本"]
 
@@ -1280,6 +1288,7 @@ python main.py evaluate -d wg2 --strategies naive_dense,hybrid_rrf --mode retrie
 #### Phase 1: 逐策略 × 逐题检索
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","mainBkg":"#ffffff","primaryColor":"#f8fafc","primaryTextColor":"#0f172a","primaryBorderColor":"#334155","lineColor":"#475569","secondaryColor":"#eef6ff","tertiaryColor":"#fff7ed","clusterBkg":"#ffffff","clusterBorder":"#cbd5e1","edgeLabelBackground":"#ffffff","nodeTextColor":"#0f172a","actorBkg":"#f8fafc","actorBorder":"#334155","actorTextColor":"#0f172a","signalColor":"#475569","signalTextColor":"#0f172a","noteBkg":"#fff7ed","noteTextColor":"#0f172a","fontFamily":"Inter, ui-sans-serif, system-ui, sans-serif"}}}%%
 flowchart TD
     A["StrategyComparator.run_evaluation()"]
     B["加载 EvalDataset<br/>取 n_questions 子集"]
@@ -1333,6 +1342,7 @@ flowchart TD
 evaluate 的完整流程分为两个阶段，每个阶段有独立的缓存：
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","mainBkg":"#ffffff","primaryColor":"#f8fafc","primaryTextColor":"#0f172a","primaryBorderColor":"#334155","lineColor":"#475569","secondaryColor":"#eef6ff","tertiaryColor":"#fff7ed","clusterBkg":"#ffffff","clusterBorder":"#cbd5e1","edgeLabelBackground":"#ffffff","nodeTextColor":"#0f172a","actorBkg":"#f8fafc","actorBorder":"#334155","actorTextColor":"#0f172a","signalColor":"#475569","signalTextColor":"#0f172a","noteBkg":"#fff7ed","noteTextColor":"#0f172a","fontFamily":"Inter, ui-sans-serif, system-ui, sans-serif"}}}%%
 flowchart LR
     subgraph P1["Phase 1: 检索 / 生成"]
         Q["eval_dataset questions"]
@@ -1462,6 +1472,7 @@ python main.py generate-eval -d wg2 --domain ipcc --n-questions 50 --model deeps
 #### 整体流程
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","mainBkg":"#ffffff","primaryColor":"#f8fafc","primaryTextColor":"#0f172a","primaryBorderColor":"#334155","lineColor":"#475569","secondaryColor":"#eef6ff","tertiaryColor":"#fff7ed","clusterBkg":"#ffffff","clusterBorder":"#cbd5e1","edgeLabelBackground":"#ffffff","nodeTextColor":"#0f172a","actorBkg":"#f8fafc","actorBorder":"#334155","actorTextColor":"#0f172a","signalColor":"#475569","signalTextColor":"#0f172a","noteBkg":"#fff7ed","noteTextColor":"#0f172a","fontFamily":"Inter, ui-sans-serif, system-ui, sans-serif"}}}%%
 flowchart TD
     A["python main.py generate-eval"]
     B["加载领域配置<br/>load_domain_config(domain)"]
@@ -1512,6 +1523,7 @@ evaluation/domains/
 **DomainConfig 数据流**：
 
 ```mermaid
+%%{init: {"theme":"base","themeVariables":{"background":"#ffffff","mainBkg":"#ffffff","primaryColor":"#f8fafc","primaryTextColor":"#0f172a","primaryBorderColor":"#334155","lineColor":"#475569","secondaryColor":"#eef6ff","tertiaryColor":"#fff7ed","clusterBkg":"#ffffff","clusterBorder":"#cbd5e1","edgeLabelBackground":"#ffffff","nodeTextColor":"#0f172a","actorBkg":"#f8fafc","actorBorder":"#334155","actorTextColor":"#0f172a","signalColor":"#475569","signalTextColor":"#0f172a","noteBkg":"#fff7ed","noteTextColor":"#0f172a","fontFamily":"Inter, ui-sans-serif, system-ui, sans-serif"}}}%%
 flowchart LR
     Domain["DomainConfig"]
     ChunkFilter["chunk_filter<br/>追加在通用过滤之后"]
