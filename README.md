@@ -91,55 +91,210 @@ advanced-rag/
 
 ### 数据流总览
 
+#### 全局模块架构
+
+```mermaid
+flowchart TB
+    CLI["main.py CLI<br/>ingest / query / evaluate / generate-eval / dataset"]
+    Config["config.py + .env<br/>模型、ChromaDB、分块、并发、RAGAS Judge"]
+
+    subgraph Core["src/ 核心 RAG 模块"]
+        Pipeline["RAGPipeline<br/>组装入库与查询链路"]
+        Loader["Document Loader<br/>TXT / Markdown / PDF"]
+        Chunker["Chunking<br/>fixed / recursive / semantic<br/>表格感知 + 质量过滤"]
+        Emb["EmbeddingModel<br/>Zhipu embedding-3"]
+        VDB["VectorStore<br/>ChromaDB HTTP Client"]
+        BM25["BM25Retriever<br/>rank-bm25 + jieba"]
+        BGE["BGEM3Retriever<br/>Dense + Sparse + ColBERT"]
+        Retriever["UnifiedRetriever<br/>8 种策略统一入口"]
+        Enhancers["增强模块<br/>Query Rewrite / LLM Rerank / Context Compression"]
+        Engine["QueryEngine<br/>检索 → 重排/压缩 → 生成"]
+        LLM["LLM<br/>智谱 / DeepSeek / OpenAI-compatible"]
+    end
+
+    subgraph Eval["evaluation/ 评估与数据生成"]
+        Dataset["EvalDataset<br/>samples / multihop / 自定义 JSON"]
+        Comparator["StrategyComparator<br/>多策略对比 + 续传"]
+        Metrics["Metrics + RAGAS<br/>传统指标 + LLM-as-Judge"]
+        Generator["EvalGenerator<br/>RAGAS TestsetGenerator"]
+        Domains["domains/<br/>default / ipcc / 自定义领域"]
+    end
+
+    subgraph Storage["运行时存储"]
+        Chroma["ChromaDB Collections<br/>{dataset}_original<br/>{dataset}_summaries"]
+        IndexCache[".index_cache/<br/>BM25 / BGE-M3 / chunks / KG / RAGAS"]
+        Output["output/<br/>history / retrieval_cache / logs / plots"]
+        Docs["documents/<br/>samples / multihop_rag / 自定义数据"]
+    end
+
+    CLI --> Config
+    CLI --> Pipeline
+    Config --> Pipeline
+    Pipeline --> Loader --> Docs
+    Pipeline --> Chunker
+    Pipeline --> Emb
+    Pipeline --> VDB --> Chroma
+    Pipeline --> BM25 --> IndexCache
+    Pipeline --> BGE --> IndexCache
+    Pipeline --> Retriever --> Engine
+    Engine --> Enhancers
+    Engine --> LLM
+    Comparator --> Pipeline
+    Comparator --> Dataset
+    Comparator --> Metrics
+    Comparator --> Output
+    Generator --> Domains
+    Generator --> IndexCache
+    Generator --> Dataset
 ```
-═══════════════════ Ingest Pipeline ═══════════════════
 
-  Documents ──▶ Load ──▶ Preprocess ──▶ Chunk + Quality Filter
-  (txt/md/pdf)   (表格感知分块)           │
-                                         ▼
-                   ┌─────────────────────┼──────────────────┐
-                   ▼                    ▼                   ▼
-              Zhipu Emb            BM25 Index          BGE-M3 Index
-              (embedding-3)        (jieba分词)          (Dense+Sparse+ColBERT)
-                   │                    │                   │
-                   ▼                    ▼                   ▼
-              ChromaDB              .pkl 缓存           .pkl 缓存
-             (original)
-                   │
-       ✅ 7 strategies ready ← generate-eval / evaluate 可立即运行
-                   │
-                   ▼ (最后，可 Ctrl+C 跳过)
-              LLM 摘要 (glm-4-flash) → ChromaDB (summaries) + chunks.pkl
-              ✅ multi_vector 就绪
+#### Ingest 入库主流程
 
-═══════════════════ Query Pipeline ════════════════════
+```mermaid
+flowchart LR
+    Start(["python main.py ingest"])
+    Docs["文档目录<br/>.txt / .md / .pdf"]
+    Load["load_documents()<br/>读取文件并生成 Document"]
+    Clean["preprocess()<br/>清理空白、规范换行"]
+    Chunk{"分块策略"}
+    Fixed["FixedChunking<br/>固定长度 + overlap"]
+    Recursive["RecursiveChunking<br/>表格先抽取<br/>再按段落/句子递归切分"]
+    Semantic["SemanticChunking<br/>句子 embedding 相似度断点"]
+    Filter["is_low_quality_chunk()<br/>过滤过短、参考文献密集、低字母比例噪声"]
 
-  User Query ──▶ [Query Rewrite] ──▶ Retrieve (8 strategies)
-                                          │
-                                    [Rerank (LLM)]
-                                          │
-                                  [Context Compress]
-                                          │
-                           ┌──────────────┴──────────────┐
-                           ▼                             ▼
-                     LLM Generate                  Return contexts
-                     (full mode)               (retrieval mode)
-                           │                             │
-                       Answer ──▶ Output          Eval metrics ──▶ Output
+    CoreReady["7 种策略就绪<br/>naive_dense / sparse_bm25 / hybrid_rrf<br/>bge_m3_* / semantic_dual_path"]
+    SummaryReady["8 种策略就绪<br/>multi_vector 可用"]
 
-═══════════════════ Evaluate Pipeline ═════════════════
+    subgraph Indexes["并行建立检索索引"]
+        E3["Zhipu embedding-3<br/>chunk → 2048d vector"]
+        Original["ChromaDB<br/>{dataset}_original"]
+        BM25["BM25 index<br/>jieba 分词 + BM25Okapi"]
+        BM25Cache[".index_cache/{dataset}_bm25.pkl"]
+        BGE["BGE-M3 index<br/>Dense + Learned Sparse + ColBERT"]
+        BGECache[".index_cache/{dataset}_bge_m3.pkl"]
+        ChunkCache[".index_cache/{dataset}_chunks.pkl<br/>增量续传 + generate-eval 输入"]
+    end
 
-  Eval Dataset ──▶ 逐题 × 逐策略 Query Pipeline
-       (JSON)                    │
-                    ┌────────────┴────────────┐
-                    ▼                         ▼
-              retrieval mode             full mode
-              │                          │
-              ├─ Hit Rate / MRR          ├─ ROUGE-L / BLEU
-              ├─ P@K / R@K / NDCG       ├─ RAGAS 5 指标
-              └─ Context Prec/Recall     └─ 图表 (6 张)
-                 (RAGAS, 2 LLM/题)
-                 图表 (5 张)
+    subgraph OptionalSummary["最后执行，可 Ctrl+C 跳过或续传"]
+        Summarize["LLM 批量摘要<br/>INGEST_LLM_MODEL"]
+        SummaryEmb["摘要 embedding"]
+        SummaryStore["ChromaDB<br/>{dataset}_summaries"]
+    end
+
+    Start --> Docs --> Load --> Clean --> Chunk
+    Chunk --> Fixed --> Filter
+    Chunk --> Recursive --> Filter
+    Chunk --> Semantic --> Filter
+    Filter --> E3 --> Original
+    Filter --> BM25 --> BM25Cache
+    Filter --> BGE --> BGECache
+    Filter --> ChunkCache
+    Original --> CoreReady
+    BM25Cache --> CoreReady
+    BGECache --> CoreReady
+    CoreReady --> Summarize --> SummaryEmb --> SummaryStore --> SummaryReady
+```
+
+#### 查询与 8 种检索策略
+
+```mermaid
+flowchart TB
+    Q["User Query"]
+    Rewrite{"--rewrite?<br/>semantic_dual_path 自动跳过"}
+    QueryText["检索用 query"]
+    Router["UnifiedRetriever.retrieve()<br/>strategy 分发"]
+
+    subgraph DenseFamily["Embedding-3 / ChromaDB 路线"]
+        Dense["naive_dense<br/>query embedding → {dataset}_original"]
+        Multi["multi_vector<br/>原文 collection + 摘要 collection<br/>RRF 融合"]
+        HyDE["semantic_dual_path<br/>原始 query + HyDE 假设回答<br/>双路 ChromaDB + RRF"]
+    end
+
+    subgraph SparseFamily["关键词与融合路线"]
+        Sparse["sparse_bm25<br/>jieba tokens → BM25Okapi"]
+        Hybrid["hybrid_rrf<br/>Dense top_k*3 + BM25 top_k*3<br/>Reciprocal Rank Fusion"]
+    end
+
+    subgraph BGEFamily["BGE-M3 多粒度路线"]
+        BGEDense["bge_m3_dense<br/>1024d dense dot product"]
+        BGEMulti["bge_m3_multivec<br/>ColBERT MaxSim token-level"]
+        BGEHybrid["bge_m3_hybrid<br/>Dense 0.4 + Sparse 0.2 + ColBERT 0.4"]
+    end
+
+    Merge["Top-K RetrievalResult[]"]
+    Rerank{"--rerank?<br/>LLM 逐条评分重排"}
+    Compress{"--compress?<br/>LLM 抽取相关片段"}
+    Mode{"调用模式"}
+    Generate["full mode<br/>LLM.generate_with_context()<br/>生成答案"]
+    RetrieveOnly["retrieval mode<br/>只返回 contexts<br/>用于快速评估"]
+    Response["RAGResponse<br/>answer / contexts / timings / rewritten_query"]
+
+    Q --> Rewrite
+    Rewrite -->|是| QueryText
+    Rewrite -->|否| QueryText
+    QueryText --> Router
+    Router --> Dense --> Merge
+    Router --> Multi --> Merge
+    Router --> HyDE --> Merge
+    Router --> Sparse --> Merge
+    Router --> Hybrid --> Merge
+    Router --> BGEDense --> Merge
+    Router --> BGEMulti --> Merge
+    Router --> BGEHybrid --> Merge
+    Merge --> Rerank --> Compress --> Mode
+    Mode --> Generate --> Response
+    Mode --> RetrieveOnly --> Response
+```
+
+#### 评估与缓存流水线
+
+```mermaid
+flowchart LR
+    EvalCmd(["python main.py evaluate"])
+    EvalSet["评估集 JSON<br/>question / ground_truth / contexts / difficulty"]
+    Strategies["策略列表<br/>all 或逗号分隔"]
+
+    subgraph Phase1["Phase 1: Query Pipeline"]
+        CacheCheck["检查 output/retrieval_cache"]
+        RunQueries["逐策略 × 逐题运行<br/>pipeline.retrieve() 或 pipeline.query()"]
+        RetCache["保存 Retrieval Cache<br/>冻结 contexts 与 HyDE 输出"]
+    end
+
+    subgraph Phase2["Phase 2: Metrics / Judge"]
+        Mode{"--mode"}
+        RetrievalMetrics["retrieval mode<br/>Hit Rate / MRR / P@K / R@K / NDCG"]
+        FullMetrics["full mode<br/>ROUGE-L / BLEU"]
+        RagasCacheCheck["检查 .index_cache/ragas_cache"]
+        Ragas["RAGAS evaluate()<br/>Context Precision / Recall<br/>Faithfulness / Relevancy / Correctness"]
+        RagasCache["保存 RAGAS Cache<br/>按 dataset + strategy + mode + judge_model"]
+    end
+
+    subgraph Reports["输出"]
+        JSON["full_results.json<br/>meta + summary + details"]
+        CSV["details.csv"]
+        Table["comparison_table.txt"]
+        Plots["--plot 图表<br/>retrieval 5 张 / full 6 张"]
+    end
+
+    EvalCmd --> EvalSet
+    EvalCmd --> Strategies
+    EvalSet --> CacheCheck
+    Strategies --> CacheCheck
+    CacheCheck -->|hit| RetCache
+    CacheCheck -->|miss| RunQueries
+    RunQueries --> RetCache
+    RetCache --> Mode
+    Mode -->|retrieval| RetrievalMetrics
+    Mode -->|full| FullMetrics
+    RetrievalMetrics --> RagasCacheCheck
+    FullMetrics --> RagasCacheCheck
+    RagasCacheCheck -->|hit| RagasCache
+    RagasCacheCheck -->|miss| Ragas
+    Ragas --> RagasCache
+    RagasCache --> JSON
+    RagasCache --> CSV
+    RagasCache --> Table
+    RagasCache --> Plots
 ```
 
 ---
@@ -942,30 +1097,29 @@ python main.py evaluate -d my_dataset --strategies naive_dense,hybrid_rrf,bge_m3
 python main.py ingest -d samples --reset
 ```
 
-```
-Step 1. 加载全部文档 (load_documents)
-        │
-Step 2. 预处理：清理空白、规范化换行
-        │
-Step 3. 表格感知递归分块：
-        │   a. 提取完整 HTML 表格 → 独立 chunk (type="table")
-        │   b. 剩余文本 → 递归分块 (type="text")
-        │   c. 质量过滤：移除过短/参考文献/噪声 chunk
-        │
-Step 4. 智谱 Embedding-3 编码 → ChromaDB ({dataset}_original)    ← 快
-        │
-Step 5. BM25 索引构建 → .index_cache/{dataset}_bm25.pkl          ← 快
-        │
-Step 6. BGE-M3 编码 → .index_cache/{dataset}_bge_m3.pkl          ← 快
-        │
-        ✅ "Core ingestion complete! 7 strategies ready"
-        │   此时可以运行 generate-eval 和 evaluate（除 multi_vector）
-        │
-Step 7. LLM 摘要生成 → ChromaDB ({dataset}_summaries)            ← 慢（放最后）
-                模型: INGEST_LLM_MODEL (默认 glm-4-flash)
-                支持 Ctrl+C 中断，不影响其他步骤
-                支持断点续传（检查已有摘要数量，跳过已完成的）
-                完成后 multi_vector 策略可用
+```mermaid
+flowchart TD
+    A["Step 1<br/>load_documents()<br/>一次性加载全部文件"]
+    B["Step 2<br/>preprocess()<br/>清理空白、规范换行"]
+    C["Step 3<br/>分块 + 质量过滤"]
+    C1["表格感知<br/>HTML table + 标题行<br/>独立 chunk(type=table)"]
+    C2["文本递归分块<br/>段落 → 换行 → 中英文句子 → 空格"]
+    C3["低质量过滤<br/>过短 / 参考文献密集 / 字母比例过低"]
+    D["Step 4<br/>Embedding-3 → ChromaDB<br/>{dataset}_original<br/>快"]
+    E["Step 5<br/>BM25 → .index_cache/{dataset}_bm25.pkl<br/>快"]
+    F["Step 6<br/>BGE-M3 → .index_cache/{dataset}_bge_m3.pkl<br/>快"]
+    G["7 种策略就绪<br/>可立即 generate-eval / evaluate<br/>multi_vector 除外"]
+    H["Step 7<br/>LLM 摘要生成<br/>INGEST_LLM_MODEL 默认 glm-4-flash<br/>慢，放最后"]
+    I["摘要 embedding → ChromaDB<br/>{dataset}_summaries"]
+    J["8 种策略就绪<br/>multi_vector 可用"]
+
+    A --> B --> C
+    C --> C1 --> C3
+    C --> C2 --> C3
+    C3 --> D --> G
+    C3 --> E --> G
+    C3 --> F --> G
+    G --> H --> I --> J
 ```
 
 > **为什么摘要放最后？** 摘要生成是 ingest 中最慢的步骤（每 chunk 一次 LLM 调用），而 8 种检索策略中只有 `multi_vector` 依赖摘要。将摘要放到最后，Step 6 完成后即可立即运行 `generate-eval` 和 `evaluate`（7 种策略），不必等待摘要完成。
@@ -978,26 +1132,32 @@ Step 7. LLM 摘要生成 → ChromaDB ({dataset}_summaries)            ← 慢�
 python main.py ingest -d wg2 --doc-dir documents/wg2 --reset --incremental
 ```
 
-```
-Step 1. 扫描目录，得到 N 个文档
-        │
-Step 2. 加载 chunks.pkl 缓存（如有），获取已处理的 chunk ID 集合
-        │
-Step 3. 逐文件循环：
-        │   ┌─ 文档 i ──▶ 分块 ──▶ 过滤已入库的 chunk
-        │   │
-        │   ├─ Embedding → ChromaDB (original)
-        │   └─ 追加到 chunks.pkl 并保存 ← ★ 每个文件完成后立即持久化
-        │
-Step 4. 全部文件完成后：
-        ├─ 从 chunks.pkl 重建 BM25 索引
-        └─ 从 chunks.pkl 重建 BGE-M3 索引
-        │
-        ✅ "Core ingestion complete! 7 strategies ready"
-        │
-Step 5. 摘要统一生成 → ChromaDB (summaries)
-                支持断点续传（检查已有摘要数 → 跳过已完成的 chunk）
-                支持 Ctrl+C 中断（不影响其他策略）
+```mermaid
+flowchart TD
+    A["扫描文档目录<br/>得到 N 个 Document"]
+    B["加载 .index_cache/{dataset}_chunks.pkl<br/>得到已处理 chunk_id 集合"]
+    C{"逐文件循环"}
+    D["当前文档 preprocess + chunk"]
+    E["过滤低质量 chunk"]
+    F{"chunk_id 已存在?"}
+    G["跳过<br/>避免重复入库"]
+    H["新 chunk<br/>Embedding-3 → ChromaDB original"]
+    I["追加到 chunks.pkl<br/>每个文件完成后立即保存"]
+    J["全部文件处理完成"]
+    K["从 chunks.pkl 全量重建 BM25<br/>IDF 依赖全语料"]
+    L["从 chunks.pkl 全量重建 BGE-M3<br/>保证与 BM25 一致"]
+    M["7 种策略就绪"]
+    N["统一生成摘要<br/>检查 summaries 已有数量后续传"]
+    O["ChromaDB summaries<br/>multi_vector 就绪"]
+
+    A --> B --> C --> D --> E --> F
+    F -->|是| G
+    G --> C
+    F -->|否| H
+    H --> I
+    I --> C
+    C -->|无更多文档| J
+    J --> K --> L --> M --> N --> O
 ```
 
 > **为什么 BM25 必须全量重建？** BM25Okapi 的 IDF（逆文档频率）需要全量语料计算——新增一个文档会改变所有词的 IDF 值，因此无法增量更新。BGE-M3 理论上可以增量 append（numpy 拼接），但为了与 BM25 保持一致，统一在最后重建。
@@ -1016,20 +1176,22 @@ Step 5. 摘要统一生成 → ChromaDB (summaries)
 
 **核心机制**：每个文件处理完后，将其 chunks 追加到 `.index_cache/{dataset}_chunks.pkl` 并立即保存。
 
-```
-首次运行（--reset）：
-  chunks.pkl = []
-  处理 doc_001 → chunks.pkl = [doc_001 的 chunks]  ← 保存
-  处理 doc_002 → chunks.pkl = [doc_001 + doc_002]   ← 保存
-  处理 doc_003 → 💥 中断！
+```mermaid
+sequenceDiagram
+    participant Run1 as 首次运行 --reset
+    participant Cache as chunks.pkl
+    participant Run2 as 续传运行 不加 --reset
+    participant Index as BM25 / BGE-M3
 
-续传（不加 --reset）：
-  读取 chunks.pkl → 已有 doc_001 + doc_002 的 chunk IDs
-  处理 doc_001 → 全部 chunk 已存在，跳过
-  处理 doc_002 → 全部 chunk 已存在，跳过
-  处理 doc_003 → 新 chunks，正常入库        ← 从断点继续
-  ...
-  全部完成 → 重建 BM25 + BGE-M3
+    Run1->>Cache: 初始化为空
+    Run1->>Cache: doc_001 chunks 写入并保存
+    Run1->>Cache: doc_002 chunks 写入并保存
+    Run1--xRun1: doc_003 处理中断
+    Run2->>Cache: 读取已有 chunk_id
+    Run2->>Run2: doc_001 / doc_002 全部跳过
+    Run2->>Cache: doc_003 新 chunks 继续写入
+    Run2->>Cache: 后续文档逐个保存
+    Run2->>Index: 全部完成后统一重建索引
 ```
 
 **断点续传命令**：
@@ -1081,19 +1243,30 @@ python main.py dataset delete my_dataset
 
 Ingest 为每个 chunk 建立**两套完全独立的索引**：
 
-```
-同一批 chunk 文本
-        │
-        ├─── 智谱 Embedding-3 ──→ ChromaDB
-        │       2048 维向量 + cosine 距离
-        │       用于: naive_dense, hybrid_rrf, multi_vector, semantic_dual_path
-        │
-        └─── BGE-M3 ────────────→ .index_cache/{dataset}_bge_m3.pkl
-                一次编码输出三种表示：
-                ├─ Dense:   np.ndarray (n_chunks, 1024)  → 点积检索
-                ├─ Sparse:  list[dict{token_id: weight}] → token 权重内积
-                └─ ColBERT: list[np.ndarray]             → MaxSim (token-level)
-                用于: bge_m3_dense, bge_m3_multivec, bge_m3_hybrid
+```mermaid
+flowchart LR
+    Chunks["同一批 chunk 文本"]
+
+    subgraph E3Path["Embedding-3 + ChromaDB 索引"]
+        E3["Zhipu embedding-3<br/>2048 维向量"]
+        Chroma["ChromaDB cosine<br/>{dataset}_original"]
+        E3Use["用于<br/>naive_dense<br/>hybrid_rrf<br/>multi_vector<br/>semantic_dual_path"]
+    end
+
+    subgraph BGEPath["BGE-M3 本地多粒度索引"]
+        BGE["BGE-M3 一次编码"]
+        DenseVec["Dense<br/>np.ndarray(n_chunks, 1024)<br/>点积检索"]
+        SparseVec["Learned Sparse<br/>list[dict token_id: weight]<br/>token 权重内积"]
+        ColBERT["ColBERT Multi-Vector<br/>list[np.ndarray]<br/>MaxSim token-level"]
+        BGECache[".index_cache/{dataset}_bge_m3.pkl"]
+        BGEUse["用于<br/>bge_m3_dense<br/>bge_m3_multivec<br/>bge_m3_hybrid"]
+    end
+
+    Chunks --> E3 --> Chroma --> E3Use
+    Chunks --> BGE
+    BGE --> DenseVec --> BGECache
+    BGE --> SparseVec --> BGECache
+    BGE --> ColBERT --> BGECache --> BGEUse
 ```
 
 BGE-M3 **完全不使用 ChromaDB**。查询时加载 pickle 到内存，在 Python/numpy 中直接计算相似度。好处是不依赖外部服务，但整个索引需要装入内存。
@@ -1106,15 +1279,23 @@ python main.py evaluate -d wg2 --strategies naive_dense,hybrid_rrf --mode retrie
 
 #### Phase 1: 逐策略 × 逐题检索
 
-```
-for strategy in [naive_dense, hybrid_rrf, ...]:
-    for question in eval_dataset:
-        │
-        ├── full mode:      QueryEngine.query()      → RAGResponse(answer, contexts, timings)
-        │                   包含 LLM 生成（慢，30-60s/题）
-        │
-        └── retrieval mode: QueryEngine.retrieve_only() → RAGResponse(contexts, timings)
-                            纯检索，无 LLM 调用（快，<1s/题）
+```mermaid
+flowchart TD
+    A["StrategyComparator.run_evaluation()"]
+    B["加载 EvalDataset<br/>取 n_questions 子集"]
+    C["遍历策略<br/>naive_dense / hybrid_rrf / ..."]
+    D["遍历问题"]
+    E{"--mode"}
+    F["full<br/>QueryEngine.query()<br/>检索 + LLM 生成<br/>RAGResponse(answer, contexts, timings)"]
+    G["retrieval<br/>QueryEngine.retrieve_only()<br/>只检索 + 可选 rerank<br/>RAGResponse(contexts, timings)"]
+    H["strategy_responses[strategy][i]"]
+
+    A --> B --> C --> D --> E
+    E -->|full| F
+    E -->|retrieval| G
+    F --> H
+    G --> H
+    H --> C
 ```
 
 > **答案语言**：RAG 生成的答案会自动跟随问题语言（英文问题 → 英文回答）。这确保 ROUGE-L/BLEU 和 RAGAS 指标在同一语言内比较，避免跨语言评分失真。
@@ -1151,31 +1332,29 @@ for strategy in [naive_dense, hybrid_rrf, ...]:
 
 evaluate 的完整流程分为两个阶段，每个阶段有独立的缓存：
 
-```
-┌─ Phase 1: 检索 ─────────────────────────────────────────────┐
-│                                                              │
-│  for strategy in strategies:                                 │
-│    for question in eval_dataset:                             │
-│      naive_dense:         Query → ChromaDB → contexts        │
-│      hybrid_rrf:          Query → ChromaDB + BM25 → contexts │
-│      semantic_dual_path:  Query → LLM(HyDE) → ChromaDB → contexts
-│                                   ↑ HyDE 文本每次运行可能不同  │
-│                                                              │
-│  → 结果存入 strategy_responses 字典                           │
-│  → 保存到 Retrieval Cache                                    │
-│                                                              │
-│  传统指标（Hit Rate/MRR/NDCG 等）从这里计算                    │
-└──────────────────────────────────────────────────────────────┘
-                              │
-                              ▼ 传递 contexts
-┌─ Phase 2: RAGAS Judge ──────────────────────────────────────┐
-│                                                              │
-│  for strategy in strategies:                                 │
-│    RAGAS evaluate(contexts) → Context Precision/Recall 等     │
-│    每题调用 LLM Judge（DeepSeek/智谱）                         │
-│                                                              │
-│  → 保存到 RAGAS Cache                                        │
-└──────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph P1["Phase 1: 检索 / 生成"]
+        Q["eval_dataset questions"]
+        S["strategies"]
+        Run["逐策略 × 逐题<br/>QueryEngine.query / retrieve_only"]
+        Contexts["strategy_responses<br/>contexts / answer / timings / rewritten_query"]
+        RetCache["output/retrieval_cache<br/>保存 Phase 1 结果"]
+        Traditional["传统指标输入<br/>Hit Rate / MRR / NDCG 等"]
+    end
+
+    subgraph P2["Phase 2: RAGAS Judge"]
+        SameContexts["沿用同一批 contexts<br/>避免检索结果不一致"]
+        Judge["RAGAS evaluate()<br/>LLM-as-Judge"]
+        RagasMetrics["Context Precision / Recall<br/>Faithfulness / Correctness 等"]
+        RagasCache[".index_cache/ragas_cache<br/>保存 Judge 分数"]
+    end
+
+    Q --> Run
+    S --> Run
+    Run --> Contexts --> RetCache
+    Contexts --> Traditional
+    Contexts --> SameContexts --> Judge --> RagasMetrics --> RagasCache
 ```
 
 **关键设计**：Phase 2 的输入（contexts）来自 Phase 1 的 `strategy_responses` 字典。两个阶段在同一次运行中共享**完全相同的检索结果**，不存在不一致的问题。
@@ -1282,45 +1461,44 @@ python main.py generate-eval -d wg2 --domain ipcc --n-questions 50 --model deeps
 
 #### 整体流程
 
+```mermaid
+flowchart TD
+    A["python main.py generate-eval"]
+    B["加载领域配置<br/>load_domain_config(domain)"]
+    B1["DomainConfig<br/>distribution / personas / llm_context<br/>chunk_filter / post_filter"]
+    C["加载 chunks<br/>.index_cache/{dataset}_chunks.pkl"]
+    D["通用质量过滤<br/>过短 / 表格 / 参考文献 / 噪声"]
+    E{"有领域 chunk_filter?"}
+    F["领域过滤<br/>如 IPCC: 目录页、作者列表、图片引用、附录、引用格式"]
+    G["按文档分组采样<br/>保持 chunk_index 顺序<br/>窗口采样 + round-robin 覆盖"]
+    H{"KG 缓存存在?"}
+    I["加载<br/>.index_cache/{dataset}_knowledge_graph.json"]
+    J["构建知识图谱<br/>Summary / Themes / NER / Embedding / Similarity"]
+    K["保存 KG 缓存"]
+    L["配置 TestsetGenerator<br/>persona_list + llm_context + query_distribution"]
+    M["生成问题<br/>SingleHop / MultiHopAbstract / MultiHopSpecific"]
+    N{"有 post_filter?"}
+    O["生成后过滤<br/>去除结构类、引用类、短答案或幻觉题"]
+    P["转换为 EvalQuestion JSON<br/>question / ground_truth / contexts / difficulty"]
+    Q["保存<br/>evaluation/{dataset}_eval_dataset.json"]
+
+    A --> B --> B1 --> C --> D --> E
+    E -->|是| F
+    F --> G
+    E -->|否| G
+    G --> H
+    H -->|是| I
+    I --> L
+    H -->|否| J
+    J --> K --> L
+    L --> M --> N
+    N -->|是| O
+    O --> P
+    N -->|否| P
+    P --> Q
 ```
-Step 1. 加载领域配置
-        │  load_domain_config("ipcc") → DomainConfig
-        │  包含：distribution, personas, llm_context, chunk_filter, post_filter
-        │
-Step 2. 加载 chunks
-        │  从 .index_cache/{dataset}_chunks.pkl 加载
-        │
-Step 3. 采样 + 两级质量过滤
-        │  a. 通用过滤：HTML 碎片、参考文献、噪声、过短
-        │  b. 领域过滤（domain_config.chunk_filter）：
-        │     IPCC: 目录页、作者列表、图片引用、附录/术语表、引用格式
-        │  c. 按文档 round-robin 采样，偏好长 chunk
-        │
-Step 4. 知识图谱（KG）：有缓存则加载，否则构建
-        │  ┌── 缓存存在 → 直接加载（秒级）
-        │  └── 缓存不存在 → 构建（SummaryExtractor + ThemesExtractor +
-        │       NERExtractor + EmbeddingExtractor + SimilarityBuilder）
-        │       → 保存到 .index_cache/{dataset}_knowledge_graph.json
-        │
-Step 5. 题目生成（注入领域配置）
-        │  TestsetGenerator 接收：
-        │  ├─ persona_list:       从 domain_config.personas 构建 Persona 对象
-        │  │   IPCC: Climate Policy Analyst / Adaptation Engineer / Vulnerability Researcher
-        │  ├─ llm_context:        domain_config.llm_context（生成引导 prompt）
-        │  │   IPCC: 引导定量/对比/因果/不确定性/跨部门题目
-        │  └─ query_distribution: domain_config.distribution
-        │       IPCC: SingleHop(20%) + MultiHopAbstract(40%) + MultiHopSpecific(40%)
-        │  如有 post_filter，多生成 30% 题目（补偿过滤损耗）
-        │
-Step 6. 生成后质量过滤（domain_config.post_filter）
-        │  IPCC: 过滤作者/引用/结构类问题 + 短答案 + 幻觉检测
-        │  截断到目标题数
-        │
-Step 7. 格式转换 + 保存
-        │  RAGAS Testset → EvalQuestion JSON（含 domain 元数据）
-        │  旧文件自动备份（加时间戳后缀，不覆盖）
-        │  → evaluation/{dataset}_eval_dataset.json
-```
+
+如果目标文件已存在，生成器会先自动备份旧文件（加时间戳后缀），再写入新的 `evaluation/{dataset}_eval_dataset.json`。
 
 #### 领域配置系统
 
@@ -1333,18 +1511,24 @@ evaluation/domains/
 
 **DomainConfig 数据流**：
 
-```
-DomainConfig
-    │
-    ├── chunk_filter ──────→ Step 3（采样阶段，追加在通用过滤之后）
-    │
-    ├── distribution ──────→ Step 5（控制 SingleHop/MultiHop 比例）
-    │
-    ├── personas ──────────→ Step 5（注入 TestsetGenerator.persona_list）
-    │
-    ├── llm_context ───────→ Step 5（注入 TestsetGenerator.llm_context）
-    │
-    └── post_filter ───────→ Step 6（生成后质量过滤）
+```mermaid
+flowchart LR
+    Domain["DomainConfig"]
+    ChunkFilter["chunk_filter<br/>追加在通用过滤之后"]
+    Distribution["distribution<br/>控制 SingleHop / MultiHop 比例"]
+    Personas["personas<br/>注入 TestsetGenerator.persona_list"]
+    Context["llm_context<br/>注入 TestsetGenerator.llm_context"]
+    PostFilter["post_filter<br/>生成后质量过滤"]
+
+    Step3["Step 3<br/>采样 + 质量过滤"]
+    Step5["Step 5<br/>RAGAS 题目生成"]
+    Step6["Step 6<br/>生成后过滤"]
+
+    Domain --> ChunkFilter --> Step3
+    Domain --> Distribution --> Step5
+    Domain --> Personas --> Step5
+    Domain --> Context --> Step5
+    Domain --> PostFilter --> Step6
 ```
 
 **新增领域的步骤**：
