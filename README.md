@@ -1754,7 +1754,13 @@ $$\text{score}(Q, D) = \sum_{i=1}^{n} \max_{j=1}^{m} \text{sim}(q_i, d_j)$$
 
 对 query 中的每个 token embedding，找到 document 中与其最相似的 token embedding，求和。比单向量 Dense 更精细（token-level 交互），同时 document 端可离线编码。
 
-**三路融合（hybrid）** 使用加权求和：$\text{score} = 0.4 \cdot \text{dense} + 0.2 \cdot \text{sparse} + 0.4 \cdot \text{colbert}$。权重可在 `config.py` 中调整。
+**三路融合（hybrid）** 使用加权求和：
+
+$$
+\text{score} = 0.4 \cdot \text{dense} + 0.2 \cdot \text{sparse} + 0.4 \cdot \text{colbert}
+$$
+
+权重可在 `config.py` 中调整。
 
 ### RAGAS Faithfulness 评估
 
